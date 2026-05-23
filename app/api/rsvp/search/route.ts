@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
   const { firstName, lastName } = await request.json();
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Search by first name (case-insensitive)
-  let query = supabase
+  let query = getSupabase()
     .from("guests")
     .select("id, first_name, last_name, party_id")
     .ilike("first_name", firstName.trim());
@@ -33,14 +33,14 @@ export async function POST(request: NextRequest) {
   const guest = guests[0];
 
   // Get party info
-  const { data: party } = await supabase
+  const { data: party } = await getSupabase()
     .from("parties")
     .select("id, name, invited_to_welcome_dinner")
     .eq("id", guest.party_id)
     .single();
 
   // Get all party members (excluding unnamed placeholders)
-  const { data: members } = await supabase
+  const { data: members } = await getSupabase()
     .from("guests")
     .select("id, first_name, last_name")
     .eq("party_id", guest.party_id)
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
   // Get any existing RSVP responses
   const memberIds = (members ?? []).map((m) => m.id);
-  const { data: existingResponses } = await supabase
+  const { data: existingResponses } = await getSupabase()
     .from("rsvp_responses")
     .select("*")
     .in("guest_id", memberIds);

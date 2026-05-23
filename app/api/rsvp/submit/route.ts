@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
   const { responses } = await request.json();
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   }
 
   for (const response of responses) {
-    const { error } = await supabase.from("rsvp_responses").upsert(
+    const { error } = await getSupabase().from("rsvp_responses").upsert(
       {
         guest_id: response.guest_id,
         wedding_attending: response.wedding_attending,
