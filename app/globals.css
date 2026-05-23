@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  /* Primary palette */
+  --color-sage:         #7B9E87;
+  --color-sage-light:   #C8D8C4;
+  --color-sage-dark:    #4E7A60;
+  --color-beige:        #F5F0E8;
+  --color-beige-dark:   #E5DDD0;
+  --color-brown:        #3D3128;
+  --color-brown-light:  #7A6A5A;
+
+  /* Wildflower accents */
+  --color-mauve:        #C47A85;
+  --color-lavender:     #9B8ABF;
+  --color-gold:         #D4A843;
+  --color-terracotta:   #C4724A;
+
+  /* Fonts — serif for headings, nunito for body */
+  --font-serif: var(--font-playfair), Georgia, serif;
+  --font-sans:  var(--font-nunito), system-ui, sans-serif;
+}
+
+body {
+  background-color: #F5F0E8;
+  color: #3D3128;
+  font-size: 1rem;
+  line-height: 1.7;
+}
