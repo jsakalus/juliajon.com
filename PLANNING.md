@@ -47,23 +47,28 @@
 
 ### Phase 2 — Landing Page + Site Structure ✓ COMPLETE
 - ✓ Next.js project created (App Router, TypeScript, Tailwind CSS)
-- ✓ Supabase connected via `lib/supabase.ts` using service role key
-- ✓ Environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`
+- ✓ Supabase connected via `lib/supabase.ts` — lazy getter pattern (avoids build-time env var errors on Vercel)
+- ✓ Environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` AND in Vercel dashboard
 - ✓ Hero section: names, countdown, date, venue
-- ✓ Navigation: sage green bar, right-aligned links, RSVP pill button
+- ✓ Navigation: Peanut (dog photo) as circular home icon, right-aligned links, RSVP pill button
 - ✓ Footer: dark brown with names and date
 - ✓ Color palette: sage, beige, brown + wildflower accents (mauve, lavender, gold, terracotta)
-- ✓ Font: Playfair Display (serif, italic for headings)
-- ✓ Favicon: add `app/icon.png` (dog photo — Peanut)
+- ✓ Font: Playfair Display (serif headings) + Nunito (body)
+- ✓ Favicon + nav icon: `public/dog.png` + `app/icon.png` (Peanut the Vizsla)
 - ✓ All page skeletons created with consistent styling
-- **Still needed**: deploy to Vercel, connect domain via Squarespace DNS
+- ✓ Deployed to Vercel (auto-deploys on push to main branch)
+- ✓ DNS configured: Squarespace A record → Vercel IP, CNAME www → Vercel
+- ✓ Vercel Deployment Protection: Standard Protection (custom domains are public)
+- **DNS still propagating**: `www.juliajon.com` may take a few more hours to resolve; `juliajon-com.vercel.app` is the public Vercel URL in the meantime
 
 ### Phase 3 — RSVP + Page Content ← UP NEXT
 - ✓ RSVP: name search → party lookup → per-guest form (wedding + welcome dinner + dietary notes) → submit
 - ✓ RSVP API routes: `POST /api/rsvp/search`, `POST /api/rsvp/submit` (upsert on guest_id)
-- Fill in real content: FAQ answers, schedule times, hotel recommendations, registry links
-- Deploy to Vercel + connect domain via Squarespace DNS settings
-- *Nice to have*: Photo gallery, Our Story
+- [ ] Test RSVP end-to-end on live site once DNS resolves
+- [ ] Fill in real content: FAQ answers, schedule times, hotel recommendations, registry links
+- [ ] Last names for single-name guests (needed for RSVP name search to work)
+- [ ] Finalize welcome dinner invite list (`invited_to_welcome_dinner` flag in Supabase)
+- *Nice to have*: Photo gallery, Our Story, whimsical design refinement
 
 ---
 
