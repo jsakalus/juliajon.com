@@ -1,40 +1,150 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import PeanutCelebration from "../components/PeanutCelebration";
 
-type Guest = { id: string; first_name: string; last_name: string | null };
+type AttendanceStatus = "yes" | "no" | "maybe" | null;
+
+type Guest = {
+  id: string;
+  first_name: string;
+  last_name: string | null;
+  email: string | null;
+  phone: string | null;
+};
+
 type Party = { id: string; name: string; invited_to_welcome_dinner: boolean };
+
 type RsvpEntry = {
   guest_id: string;
-  wedding_attending: boolean | null;
-  welcome_dinner_attending: boolean | null;
+  wedding_attending_status: AttendanceStatus;
+  welcome_dinner_status: AttendanceStatus;
+  maybe_reason: string;
   dietary_notes: string;
+  travel_mode: "flying_booked" | "flying_not_booked" | "driving" | null;
+  staying_late: boolean | null;
+  email: string;
+  cell: string;
 };
+
 type SearchResult = {
   party: Party;
   members: Guest[];
-  existingResponses: RsvpEntry[];
+  existingResponses: (RsvpEntry & { wedding_attending_status: AttendanceStatus })[];
 };
 
-type AttendanceButtonProps = {
-  selected: boolean | null;
+type StatusButtonProps = {
+  current: string | boolean | null;
+  value: string;
+  label: string;
+  activeClass: string;
+  onClick: () => void;
+};
+
+type BoolButtonProps = {
+  current: boolean | null;
   value: boolean;
   label: string;
   activeClass: string;
   onClick: () => void;
 };
 
-function AttendanceButton({ selected, value, label, activeClass, onClick }: AttendanceButtonProps) {
+function StatusButton({ current, value, label, activeClass, onClick }: StatusButtonProps) {
+  const isActive = current === value;
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`px-4 py-2 text-sm border transition-colors ${
-        selected === value ? activeClass : "border-beige-dark text-brown-light hover:border-sage"
+      className={`px-5 py-2 text-sm rounded-full border transition-colors ${
+        isActive ? activeClass : "border-beige-dark text-brown-light hover:border-sage"
       }`}
     >
       {label}
     </button>
+  );
+}
+
+function BoolButton({ current, value, label, activeClass, onClick }: BoolButtonProps) {
+  const isActive = current === value;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-5 py-2 text-sm rounded-full border transition-colors ${
+        isActive ? activeClass : "border-beige-dark text-brown-light hover:border-sage"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+const BLOOMED_FLOWERS = ["🌸", "🌼", "🌻", "🌷", "🌺"];
+
+function FlowerGarden({
+  responded,
+  newlyBloomed,
+  maybe,
+  newlySprouted,
+  showThankYou = true,
+}: {
+  responded: number;
+  newlyBloomed: number;
+  maybe: number;
+  newlySprouted: number;
+  showThankYou?: boolean;
+}) {
+  if (responded === 0 && maybe === 0) return null;
+
+  return (
+    <div className="text-center py-10">
+      <p className="text-xs tracking-[0.2em] uppercase text-brown-light mb-5">
+        Our Guest List Is Blooming ♡
+      </p>
+      <div className="flex flex-wrap justify-center gap-2 max-w-sm mx-auto">
+        {Array.from({ length: responded }).map((_, i) => {
+          const isNew = newlyBloomed > 0 && i >= responded - newlyBloomed;
+          const emoji = BLOOMED_FLOWERS[i % BLOOMED_FLOWERS.length];
+          return (
+            <span
+              key={`flower-${i}`}
+              className="text-2xl inline-block"
+              style={{
+                animation: "flower-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+                animationDelay: isNew
+                  ? `${(i - (responded - newlyBloomed)) * 0.12}s`
+                  : `${i * 0.025}s`,
+              }}
+            >
+              {emoji}
+            </span>
+          );
+        })}
+        {Array.from({ length: maybe }).map((_, i) => {
+          const isNew = newlySprouted > 0 && i >= maybe - newlySprouted;
+          return (
+            <span
+              key={`seedling-${i}`}
+              className="text-2xl inline-block"
+              style={{
+                animation: "flower-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+                animationDelay: isNew
+                  ? `${(i - (maybe - newlySprouted)) * 0.12}s`
+                  : `${(responded + i) * 0.025}s`,
+              }}
+            >
+              🌱
+            </span>
+          );
+        })}
+      </div>
+      {showThankYou && (
+        <p className="font-handwritten text-sage text-xl mt-5">
+          thank you to everyone who&apos;s already replied!
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -47,6 +157,21 @@ export default function RSVP() {
   const [responses, setResponses] = useState<Record<string, RsvpEntry>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showPeanut, setShowPeanut] = useState(false);
+  const [gardenCount, setGardenCount] = useState({ responded: 0, maybe: 0, total: 0 });
+  const [newlyBloomed, setNewlyBloomed] = useState(0);
+  const [newlySprouted, setNewlySprouted] = useState(0);
+  const [blooming, setBlooming] = useState(false);
+  const [bloomFading, setBloomFading] = useState(false);
+  const [bloomFlowers, setBloomFlowers] = useState<string[]>([]);
+  const [gardenVisible, setGardenVisible] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/rsvp/count", { cache: "no-store" })
+      .then((r) => r.json())
+      .then(setGardenCount)
+      .catch(() => {});
+  }, []);
 
   const updateResponse = (guestId: string, field: keyof RsvpEntry, value: unknown) => {
     setResponses((prev) => ({ ...prev, [guestId]: { ...prev[guestId], [field]: value } }));
@@ -84,9 +209,14 @@ export default function RSVP() {
       const existing = data.existingResponses?.find((r) => r.guest_id === member.id);
       initial[member.id] = {
         guest_id: member.id,
-        wedding_attending: existing?.wedding_attending ?? null,
-        welcome_dinner_attending: existing?.welcome_dinner_attending ?? null,
+        wedding_attending_status: existing?.wedding_attending_status ?? null,
+        welcome_dinner_status: existing?.welcome_dinner_status ?? null,
+        maybe_reason: existing?.maybe_reason ?? "",
         dietary_notes: existing?.dietary_notes ?? "",
+        travel_mode: existing?.travel_mode ?? null,
+        staying_late: existing?.staying_late ?? null,
+        email: member.email ?? "",
+        cell: member.phone ?? "",
       };
     });
     setResponses(initial);
@@ -102,138 +232,468 @@ export default function RSVP() {
       body: JSON.stringify({ responses: Object.values(responses) }),
     });
 
+    const members = result?.members ?? [];
+    const prevResponded = gardenCount.responded;
+
+    const newYesGuests = members.filter((m) => {
+      const wasYes = result?.existingResponses?.find((e) => e.guest_id === m.id)?.wedding_attending_status === "yes";
+      return responses[m.id]?.wedding_attending_status === "yes" && !wasYes;
+    });
+    const upgradedFromMaybe = members.filter((m) => {
+      const wasMaybe = result?.existingResponses?.find((e) => e.guest_id === m.id)?.wedding_attending_status === "maybe";
+      return responses[m.id]?.wedding_attending_status === "yes" && wasMaybe;
+    });
+    const downgradedToMaybe = members.filter((m) => {
+      const wasYes = result?.existingResponses?.find((e) => e.guest_id === m.id)?.wedding_attending_status === "yes";
+      return responses[m.id]?.wedding_attending_status === "maybe" && wasYes;
+    });
+    const newFirstTimeMaybe = members.filter((m) => {
+      const prev = result?.existingResponses?.find((e) => e.guest_id === m.id)?.wedding_attending_status;
+      return responses[m.id]?.wedding_attending_status === "maybe" && !prev;
+    });
+
+    const yesCount = newYesGuests.length;
+    const allNewSeedlings = downgradedToMaybe.length + newFirstTimeMaybe.length;
+    const myFlowers: string[] = [
+      ...newYesGuests.map((_, i) => BLOOMED_FLOWERS[(prevResponded + i) % BLOOMED_FLOWERS.length]),
+      ...downgradedToMaybe.map(() => "🌱"),
+      ...newFirstTimeMaybe.map(() => "🌱"),
+    ];
+
+    setBloomFlowers(myFlowers);
+    setNewlyBloomed(yesCount);
+    setNewlySprouted(allNewSeedlings);
+    setGardenCount((prev) => ({
+      ...prev,
+      responded: prev.responded + yesCount - downgradedToMaybe.length,
+      maybe: prev.maybe + allNewSeedlings - upgradedFromMaybe.length,
+    }));
     setSubmitting(false);
     setSubmitted(true);
+    setShowPeanut(true);
+
+    if (myFlowers.length > 0) {
+      setBlooming(true);
+      setTimeout(() => setBloomFading(true), 3200);
+      setTimeout(() => setGardenVisible(true), 3800);
+      setTimeout(() => { setBlooming(false); setBloomFading(false); }, 4200);
+    } else {
+      setGardenVisible(true);
+    }
   };
+
+  const gardenProps = {
+    responded: gardenCount.responded,
+    newlyBloomed,
+    maybe: gardenCount.maybe,
+    newlySprouted,
+  };
+  const garden = <FlowerGarden {...gardenProps} />;
+  const gardenPostSubmit = <FlowerGarden {...gardenProps} showThankYou={false} />;
+
+  const bloomOverlay = blooming && bloomFlowers.length > 0 && (
+    <div
+      className="fixed inset-0 z-40 flex flex-col items-center justify-center pointer-events-none gap-2"
+      style={bloomFading ? { animation: "fade-out 1s ease-out forwards" } : undefined}
+    >
+      {bloomFlowers.map((flower, i) => (
+        <span
+          key={i}
+          className="text-[8rem] leading-none inline-block"
+          style={{
+            animation: "flower-bloom-big 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+            animationDelay: `${i * 0.3}s`,
+          }}
+        >
+          {flower}
+        </span>
+      ))}
+      <p
+        className="font-handwritten text-sage text-4xl mt-2"
+        style={{
+          animation: "flower-bloom-big 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+          animationDelay: `${bloomFlowers.length * 0.3}s`,
+        }}
+      >
+        {bloomFlowers.every((f) => f === "🌱") ? "your seedling is planted" : "your flower is planted"}
+      </p>
+    </div>
+  );
 
   if (submitted) {
     return (
-      <div className="max-w-xl mx-auto px-6 py-24 text-center flex flex-col gap-4">
-        <p className="font-serif italic text-5xl text-brown">Thank you!</p>
-        <p className="text-brown-light leading-relaxed">
-          Your RSVP has been received. We can't wait to celebrate with you in Canmore.
-        </p>
-        <button onClick={() => { setSubmitted(false); setResult(null); setFirstName(""); setLastName(""); }}
-          className="text-sm text-sage underline mt-4">
-          Submit another response
-        </button>
-      </div>
+      <>
+        {showPeanut && <PeanutCelebration onDismiss={() => setShowPeanut(false)} />}
+        {bloomOverlay}
+        <div
+          className="max-w-2xl mx-auto px-6 py-16 flex flex-col items-center gap-8 transition-opacity duration-1000"
+          style={{ opacity: gardenVisible ? 1 : 0 }}
+        >
+          {gardenPostSubmit}
+          <a
+            href="/"
+            className="inline-block px-8 py-3 bg-sage text-white text-sm tracking-widest uppercase rounded-full hover:bg-sage-dark transition-colors"
+          >
+            Wedding Details
+          </a>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="max-w-xl mx-auto px-6 py-16 flex flex-col gap-8">
+    <>
+      {showPeanut && <PeanutCelebration onDismiss={() => setShowPeanut(false)} />}
 
-      <div className="flex flex-col gap-2">
-        <p className="font-sans text-xs tracking-[0.3em] uppercase text-mauve font-semibold">You're invited</p>
-        <h1 className="font-serif italic text-4xl text-brown font-light">RSVP</h1>
-        <p className="font-sans text-brown mt-1">
-          Please RSVP by March 1, 2027. Enter your name and we'll find your invitation.
-        </p>
-      </div>
-
-      {/* Search form */}
-      <form onSubmit={handleSearch} className="flex flex-col gap-5 bg-white p-8">
-        <div className="flex gap-4">
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label className="text-xs tracking-widest uppercase text-brown-light">First Name</label>
-            <input
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              className="border border-beige-dark bg-beige px-3 py-2.5 text-sm w-full focus:outline-none focus:border-sage"
-              placeholder="First name"
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label className="text-xs tracking-widest uppercase text-brown-light">Last Name</label>
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              className="border border-beige-dark bg-beige px-3 py-2.5 text-sm w-full focus:outline-none focus:border-sage"
-              placeholder="Last name"
-            />
-          </div>
+      <div className="relative overflow-x-hidden">
+        {/* Flower border images */}
+        <div className="fixed left-0 top-0 h-screen hidden xl:block pointer-events-none select-none z-0">
+          <Image
+            src="/watercolor-flowers-border-left.png"
+            alt=""
+            width={220}
+            height={900}
+            className="h-full w-auto object-cover"
+          />
         </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-sage text-white px-6 py-3 text-sm tracking-widest uppercase hover:bg-sage-dark transition-colors self-start disabled:opacity-50"
-        >
-          {loading ? "Searching…" : "Find My Invitation"}
-        </button>
-      </form>
-
-      {/* Error */}
-      {error && (
-        <div className="bg-white p-6 border-l-4 border-l-mauve">
-          <p className="text-sm text-brown-light">{error}</p>
+        <div className="fixed right-0 top-0 h-screen hidden xl:block pointer-events-none select-none z-0">
+          <Image
+            src="/watercolor-flowers-border-right.png"
+            alt=""
+            width={220}
+            height={900}
+            className="h-full w-auto object-cover"
+          />
         </div>
-      )}
 
-      {/* RSVP form */}
-      {result && (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          <div>
-            <p className="text-xs tracking-widest uppercase text-sage-dark mb-1">Found your invitation</p>
-            <p className="font-serif text-2xl text-brown">{result.party.name}</p>
+        <div className="max-w-2xl mx-auto px-6">
+
+          {/* ── Hero ── */}
+          <div className="text-center pt-12 pb-8 relative">
+
+            {/* "Please RSVP" */}
+            <div className="flex items-end justify-center gap-3 md:gap-5 mb-1">
+              <span
+                className="font-serif italic text-xl md:text-2xl text-brown font-normal pb-2 inline-block"
+                style={{ animation: "please-bounce 2s ease-in-out infinite" }}
+              >
+                Please
+              </span>
+              <span className="font-serif text-5xl md:text-7xl text-brown leading-none" style={{ fontWeight: 700 }}>
+                RSVP
+              </span>
+            </div>
+
+            {/* "ASAP" */}
+            <div className="leading-none mb-2">
+              <span
+                className="font-serif text-[5.5rem] md:text-[9rem] text-brown leading-none tracking-tight"
+                style={{ fontWeight: 900 }}
+              >
+                ASAP
+              </span>
+            </div>
+
+            {/* Deadline */}
+            <p className="font-sans text-brown-light text-sm md:text-base tracking-wide mt-1">
+              or by Jan 1, 2027
+            </p>
+
+            {/* Subhead */}
+            <p className="font-serif italic text-xl md:text-2xl text-brown-light mt-4">
+              (this really helps us)
+            </p>
           </div>
 
-          {result.members.map((member) => (
-            <div key={member.id} className="bg-white p-6 flex flex-col gap-5">
-              <p className="font-serif text-xl text-brown">
-                {member.first_name}{member.last_name ? ` ${member.last_name}` : ""}
-              </p>
-
-              <div className="flex flex-col gap-2">
-                <p className="text-xs tracking-widest uppercase text-brown-light">Attending the wedding?</p>
-                <div className="flex gap-3 flex-wrap">
-                  <AttendanceButton selected={responses[member.id]?.wedding_attending ?? null} value={true}
-                    label="Yes, I'll be there" activeClass="bg-sage text-white border-sage" onClick={() => updateResponse(member.id, "wedding_attending", true)} />
-                  <AttendanceButton selected={responses[member.id]?.wedding_attending ?? null} value={false}
-                    label="Regretfully, no" activeClass="bg-mauve text-white border-mauve" onClick={() => updateResponse(member.id, "wedding_attending", false)} />
+          {/* ── Search form ── */}
+          <form onSubmit={handleSearch} className="bg-white rounded-3xl shadow-sm p-8 relative mb-8">
+            <div className="flex gap-4 mb-6">
+              <div className="flex flex-col gap-1.5 flex-1">
+                <label className="text-xs tracking-widest uppercase text-brown-light">First Name</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="border border-beige-dark bg-beige px-3 py-3 text-sm w-full rounded-xl focus:outline-none focus:border-sage pr-9"
+                    placeholder="First name"
+                    required
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sage-light text-base pointer-events-none select-none">
+                    ✿
+                  </span>
                 </div>
               </div>
-
-              {result.party.invited_to_welcome_dinner && (
-                <div className="flex flex-col gap-2">
-                  <p className="text-xs tracking-widest uppercase text-brown-light">
-                    Attending the welcome dinner? <span className="normal-case">(Friday, May 28)</span>
-                  </p>
-                  <div className="flex gap-3">
-                    <AttendanceButton selected={responses[member.id]?.welcome_dinner_attending ?? null} value={true}
-                      label="Yes" activeClass="bg-gold text-white border-gold" onClick={() => updateResponse(member.id, "welcome_dinner_attending", true)} />
-                    <AttendanceButton selected={responses[member.id]?.welcome_dinner_attending ?? null} value={false}
-                      label="No" activeClass="bg-mauve text-white border-mauve" onClick={() => updateResponse(member.id, "welcome_dinner_attending", false)} />
-                  </div>
+              <div className="flex flex-col gap-1.5 flex-1">
+                <label className="text-xs tracking-widest uppercase text-brown-light">Last Name</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="border border-beige-dark bg-beige px-3 py-3 text-sm w-full rounded-xl focus:outline-none focus:border-sage pr-9"
+                    placeholder="Last name"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sage-light text-base pointer-events-none select-none">
+                    ✿
+                  </span>
                 </div>
-              )}
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs tracking-widest uppercase text-brown-light">Dietary notes</label>
-                <textarea
-                  value={responses[member.id]?.dietary_notes ?? ""}
-                  onChange={(e) => updateResponse(member.id, "dietary_notes", e.target.value)}
-                  className="border border-beige-dark bg-beige px-3 py-2.5 text-sm w-full focus:outline-none focus:border-sage resize-none"
-                  rows={2}
-                  placeholder="Allergies, dietary restrictions, etc. Leave blank if none."
-                />
               </div>
             </div>
-          ))}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-sage text-white px-6 py-3 text-sm tracking-widest uppercase hover:bg-sage-dark transition-colors self-start disabled:opacity-50"
-          >
-            {submitting ? "Submitting…" : "Submit RSVP"}
-          </button>
-        </form>
-      )}
+            <div className="flex items-center gap-5 flex-wrap">
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-sage text-white px-8 py-3.5 text-sm tracking-widest uppercase hover:bg-sage-dark transition-colors rounded-full disabled:opacity-50 font-semibold"
+              >
+                {loading ? "Searching…" : "Find My Invitation"}
+              </button>
+            </div>
+          </form>
 
-    </div>
+          {/* ── Error ── */}
+          {error && (
+            <div className="bg-white p-6 border-l-4 border-l-mauve rounded-xl mb-6">
+              <p className="text-sm text-brown-light">{error}</p>
+            </div>
+          )}
+
+          {/* ── RSVP form ── */}
+          {result && (
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6 mb-8">
+              <p className="font-serif italic text-3xl text-sage-dark">
+                Found your invitation! 🎉
+              </p>
+
+              {result.members.map((member) => {
+                const r = responses[member.id];
+                const existingResponse = result.existingResponses?.find((e) => e.guest_id === member.id);
+                const previouslyDeclined = existingResponse?.wedding_attending_status === "no";
+                const currentlySelectingNo = r?.wedding_attending_status === "no";
+
+                return (
+                  <div key={member.id} className="bg-white p-6 flex flex-col gap-5 rounded-2xl shadow-sm">
+                    <p className="font-serif text-xl text-brown">
+                      {member.first_name}{member.last_name ? ` ${member.last_name}` : ""}
+                    </p>
+
+                    {previouslyDeclined ? (
+                      <div className="bg-beige rounded-xl p-4">
+                        <p className="text-sm text-brown-light leading-relaxed">
+                          You&apos;ve already declined — your response has been recorded. If that&apos;s changed, please get in touch with us directly.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Wedding attendance */}
+                        <div className="flex flex-col gap-2">
+                          <p className="text-xs tracking-widest uppercase text-brown-light">
+                            Attending the wedding?{" "}
+                            <span className="normal-case font-normal not-italic">(Saturday, May 29, 2027)</span>
+                          </p>
+                          <div className="flex gap-3 flex-wrap">
+                            <StatusButton
+                              current={r?.wedding_attending_status ?? null}
+                              value="yes"
+                              label="Yes, I'll be there"
+                              activeClass="bg-sage text-white border-sage"
+                              onClick={() => updateResponse(member.id, "wedding_attending_status", "yes")}
+                            />
+                            <StatusButton
+                              current={r?.wedding_attending_status ?? null}
+                              value="maybe"
+                              label="Maybe"
+                              activeClass="bg-gold text-white border-gold"
+                              onClick={() => updateResponse(member.id, "wedding_attending_status", "maybe")}
+                            />
+                            <StatusButton
+                              current={r?.wedding_attending_status ?? null}
+                              value="no"
+                              label="Regretfully, no"
+                              activeClass="bg-mauve text-white border-mauve"
+                              onClick={() => updateResponse(member.id, "wedding_attending_status", "no")}
+                            />
+                          </div>
+                          {currentlySelectingNo && (
+                            <p className="text-xs text-brown-light mt-1 leading-relaxed">
+                              Heads up — once you RSVP no, we will assume you are not coming and there will not be a space for you at the venue. If anything shifts, reach out to us directly.
+                            </p>
+                          )}
+                        </div>
+
+                        {/* All follow-up questions hidden when selecting no */}
+                        {!currentlySelectingNo && (
+                        <>
+
+                        {/* Maybe reason */}
+                        {r?.wedding_attending_status === "maybe" && (
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs tracking-widest uppercase text-brown-light">
+                              Anything you&apos;d like us to know? <span className="normal-case">(optional)</span>
+                            </label>
+                            <textarea
+                              value={r.maybe_reason}
+                              onChange={(e) => updateResponse(member.id, "maybe_reason", e.target.value)}
+                              className="border border-beige-dark bg-white px-3 py-2.5 text-sm w-full rounded-lg focus:outline-none focus:border-sage resize-none"
+                              rows={2}
+                              placeholder="e.g. waiting on a work trip, figuring out travel…"
+                            />
+                          </div>
+                        )}
+
+                        {/* Welcome dinner */}
+                        {result.party.invited_to_welcome_dinner && (
+                          <div className="flex flex-col gap-2">
+                            <p className="text-xs tracking-widest uppercase text-brown-light">
+                              Attending the welcome dinner?{" "}
+                              <span className="normal-case">(Friday, May 28)</span>
+                            </p>
+                            <div className="flex gap-3 flex-wrap">
+                              <StatusButton
+                                current={r?.welcome_dinner_status ?? null}
+                                value="yes"
+                                label="Yes"
+                                activeClass="bg-sage text-white border-sage"
+                                onClick={() => updateResponse(member.id, "welcome_dinner_status", "yes")}
+                              />
+                              <StatusButton
+                                current={r?.welcome_dinner_status ?? null}
+                                value="maybe"
+                                label="Maybe"
+                                activeClass="bg-gold text-white border-gold"
+                                onClick={() => updateResponse(member.id, "welcome_dinner_status", "maybe")}
+                              />
+                              <StatusButton
+                                current={r?.welcome_dinner_status ?? null}
+                                value="no"
+                                label="No"
+                                activeClass="bg-mauve text-white border-mauve"
+                                onClick={() => updateResponse(member.id, "welcome_dinner_status", "no")}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Flights */}
+                        <div className="flex flex-col gap-2">
+                          <p className="text-xs tracking-widest uppercase text-brown-light">
+                            Have you booked your flights yet?
+                          </p>
+                          <div className="flex gap-3 flex-wrap">
+                            <StatusButton
+                              current={r?.travel_mode ?? null}
+                              value="flying_booked"
+                              label="Yep, booked!"
+                              activeClass="bg-sage text-white border-sage"
+                              onClick={() => updateResponse(member.id, "travel_mode", "flying_booked")}
+                            />
+                            <StatusButton
+                              current={r?.travel_mode ?? null}
+                              value="flying_not_booked"
+                              label="Not yet"
+                              activeClass="bg-gold text-white border-gold"
+                              onClick={() => updateResponse(member.id, "travel_mode", "flying_not_booked")}
+                            />
+                            <StatusButton
+                              current={r?.travel_mode ?? null}
+                              value="driving"
+                              label="I'm driving"
+                              activeClass="bg-sage text-white border-sage"
+                              onClick={() => updateResponse(member.id, "travel_mode", "driving")}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Party hard */}
+                        <div className="flex flex-col gap-2">
+                          <p className="text-xs tracking-widest uppercase text-brown-light">
+                            Are you ready to party? 🪩
+                          </p>
+                          <p className="text-xs text-brown-light -mt-1 leading-relaxed">
+                            We&apos;re figuring out how late to keep the bar open. There&apos;s a hot tub, karaoke, and we have the inn to ourselves all night long.
+                          </p>
+                          <div className="flex gap-3">
+                            <BoolButton
+                              current={r?.staying_late ?? null}
+                              value={true}
+                              label="Obviously 🎉"
+                              activeClass="bg-lavender text-white border-lavender"
+                              onClick={() => updateResponse(member.id, "staying_late", true)}
+                            />
+                            <BoolButton
+                              current={r?.staying_late ?? null}
+                              value={false}
+                              label="I'll slip out early"
+                              activeClass="bg-brown-light text-white border-brown-light"
+                              onClick={() => updateResponse(member.id, "staying_late", false)}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Dietary notes */}
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs tracking-widest uppercase text-brown-light">Dietary notes</label>
+                          <textarea
+                            value={r?.dietary_notes ?? ""}
+                            onChange={(e) => updateResponse(member.id, "dietary_notes", e.target.value)}
+                            className="border border-beige-dark bg-white px-3 py-2.5 text-sm w-full rounded-lg focus:outline-none focus:border-sage resize-none"
+                            rows={2}
+                            placeholder="Allergies, dietary restrictions, etc. Leave blank if none."
+                          />
+                        </div>
+
+                        {/* Contact info */}
+                        <div className="flex flex-col gap-3">
+                          <p className="text-xs tracking-widest uppercase text-brown-light">
+                            Contact info <span className="normal-case">(so we can reach you)</span>
+                          </p>
+                          <div className="flex gap-4">
+                            <div className="flex flex-col gap-1.5 flex-1">
+                              <label className="text-xs text-brown-light">Email</label>
+                              <input
+                                type="email"
+                                value={r?.email ?? ""}
+                                onChange={(e) => updateResponse(member.id, "email", e.target.value)}
+                                className="border border-beige-dark bg-white px-3 py-2.5 text-sm w-full rounded-lg focus:outline-none focus:border-sage"
+                                placeholder="your@email.com"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1.5 flex-1">
+                              <label className="text-xs text-brown-light">Cell</label>
+                              <input
+                                type="tel"
+                                value={r?.cell ?? ""}
+                                onChange={(e) => updateResponse(member.id, "cell", e.target.value)}
+                                className="border border-beige-dark bg-white px-3 py-2.5 text-sm w-full rounded-lg focus:outline-none focus:border-sage"
+                                placeholder="+1 (555) 000-0000"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        </>
+                        )}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="bg-sage text-white px-6 py-3 text-sm tracking-widest uppercase hover:bg-sage-dark transition-colors self-start rounded-full disabled:opacity-50"
+              >
+                {submitting ? "Submitting…" : "Submit RSVP"}
+              </button>
+            </form>
+          )}
+
+          {/* ── Garden ── */}
+          {garden}
+
+        </div>
+      </div>
+    </>
   );
 }
