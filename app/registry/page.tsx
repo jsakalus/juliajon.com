@@ -146,6 +146,8 @@ export default function Registry() {
     registry_item_id: string;
     contribution_type: "purchased" | "contributed";
     amount?: number;
+    guestIdOverride?: string;
+    guestNameOverride?: string;
   }) {
     setSubmitting(true);
     await fetch("/api/registry/contribute", {
@@ -153,8 +155,8 @@ export default function Registry() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         registry_item_id: opts.registry_item_id,
-        guest_id: guestId,
-        guest_name: guestDisplayName,
+        guest_id: opts.guestIdOverride ?? guestId,
+        guest_name: opts.guestNameOverride ?? guestDisplayName,
         contribution_type: opts.contribution_type,
         amount: opts.amount ?? null,
       }),
@@ -163,7 +165,49 @@ export default function Registry() {
     setModal(null);
     setAmount("");
     setSubmitting(false);
-    fetchItems(guestId);
+    fetchItems(opts.guestIdOverride ?? guestId);
+  }
+
+  async function handleContributeAndSave(itemId: string) {
+    let resolvedGuestId = guestId;
+    let resolvedGuestName = guestDisplayName;
+
+    if (needsIdentity) {
+      setSearching(true);
+      setSearchError(null);
+      const res = await fetch("/api/rsvp/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firstName: searchFirst, lastName: searchLast }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.members) {
+        setSearchError(
+          data.error === "needs_last_name"
+            ? "Multiple guests with that name — add your last name."
+            : "We couldn't find you. Double-check your name."
+        );
+        setSearching(false);
+        return;
+      }
+      const member = data.members[0];
+      resolvedGuestName = [member.first_name, member.last_name].filter(Boolean).join(" ");
+      resolvedGuestId = member.id;
+      setGuestId(member.id);
+      setGuestDisplayName(resolvedGuestName);
+      localStorage.setItem(LS_GUEST_ID, member.id);
+      localStorage.setItem(LS_GUEST_NAME, resolvedGuestName);
+      fetchAddress();
+      setSearching(false);
+    }
+
+    await saveContribution({
+      registry_item_id: itemId,
+      contribution_type: "contributed",
+      amount: parseFloat(amount),
+      guestIdOverride: resolvedGuestId ?? undefined,
+      guestNameOverride: resolvedGuestName ?? undefined,
+    });
   }
 
   function closeModal() {
@@ -313,16 +357,9 @@ export default function Registry() {
           </div>
 
           <div className="border-t border-beige pt-4 flex flex-col gap-3">
-            <p className="text-xs text-brown-light">
-              {needsIdentity
-                ? "Let us know you contributed — who are you?"
-                : guestDisplayName
-                  ? `Contributing as ${guestDisplayName} — how much?`
-                  : "How much did you contribute?"}
-            </p>
-
             {needsIdentity ? (
-              <form onSubmit={handleSearch} className="flex flex-col gap-3">
+              <>
+                <p className="text-xs text-brown-light">Let us know who you are and how much you contributed.</p>
                 <input
                   type="text"
                   placeholder="First name"
@@ -338,35 +375,28 @@ export default function Registry() {
                   className="border border-beige-dark bg-white px-3 py-2.5 text-sm rounded-lg focus:outline-none focus:border-sage"
                 />
                 {searchError && <p className="text-xs text-mauve">{searchError}</p>}
-                <button
-                  type="submit"
-                  disabled={searching || !searchFirst}
-                  className="bg-sage text-white px-4 py-2.5 text-xs tracking-widest uppercase rounded-full disabled:opacity-50"
-                >
-                  {searching ? "Searching…" : "Continue"}
-                </button>
-              </form>
-            ) : (
-              <>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-brown-light">$</span>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="border border-beige-dark bg-white pl-7 pr-3 py-2.5 text-sm rounded-lg w-full focus:outline-none focus:border-sage"
-                  />
-                </div>
-                <button
-                  onClick={() => saveContribution({ registry_item_id: modal.item.id, contribution_type: "contributed", amount: parseFloat(amount) })}
-                  disabled={submitting || !amount}
-                  className="bg-sage text-white px-4 py-2.5 text-xs tracking-widest uppercase rounded-full disabled:opacity-50"
-                >
-                  {submitting ? "Saving…" : "Confirm"}
-                </button>
               </>
+            ) : (
+              <p className="text-xs text-brown-light">Contributing as {guestDisplayName} — how much?</p>
             )}
+
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-brown-light">$</span>
+              <input
+                type="number"
+                placeholder="0"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="border border-beige-dark bg-white pl-7 pr-3 py-2.5 text-sm rounded-lg w-full focus:outline-none focus:border-sage"
+              />
+            </div>
+            <button
+              onClick={() => handleContributeAndSave(modal.item.id)}
+              disabled={submitting || searching || !amount || (needsIdentity && !searchFirst)}
+              className="bg-sage text-white px-4 py-2.5 text-xs tracking-widest uppercase rounded-full disabled:opacity-50"
+            >
+              {submitting || searching ? "Saving…" : "Confirm"}
+            </button>
 
             <button onClick={closeModal} className="text-xs text-brown-light text-center underline underline-offset-2">
               Close

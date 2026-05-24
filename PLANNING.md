@@ -124,7 +124,7 @@
 - [ ] Run the SQL below to populate `registry_items` table
 - [ ] Add `external_url` for items/funds that are missing links (see list below)
 - [ ] Add `SHIPPING_ADDRESS` env var to `.env.local` AND Vercel dashboard
-- [ ] Confirm goal amount for Skydiving Fund (left as null)
+- ✓ Skydiving Fund goal set to $3,000
 
 **SQL to populate registry_items** (run in Supabase SQL editor):
 ```sql
