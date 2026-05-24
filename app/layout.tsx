@@ -25,6 +25,11 @@ const caveat = Caveat({
 export const metadata: Metadata = {
   title: "Julia & Jonathan | May 29, 2027",
   description: "Julia & Jonathan's wedding — May 29, 2027 in Canmore, Alberta",
+  openGraph: {
+    title: "Julia & Jonathan | May 29, 2027",
+    description: "Julia & Jonathan's wedding — May 29, 2027 in Canmore, Alberta",
+    images: [{ url: "/illustrations/julia-and-jonathan-kiss.png" }],
+  },
 };
 
 export default function RootLayout({
