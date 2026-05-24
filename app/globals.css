@@ -118,3 +118,13 @@ body {
   60%  { transform: translateY(4px)   scale(1.05); opacity: 1; }
   100% { transform: translateY(0)     scale(1);    opacity: 1; }
 }
+
+/* Registry fund description scroll — translates up by exactly the overflow on hover */
+@keyframes desc-scroll {
+  0%, 5%    { transform: translateY(0); }
+  80%, 100% { transform: translateY(calc(-100% + 4.5rem)); }
+}
+
+.fund-card:hover .desc-scroll-inner {
+  animation: desc-scroll 5s ease-in-out forwards;
+}
