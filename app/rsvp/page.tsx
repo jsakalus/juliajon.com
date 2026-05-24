@@ -87,11 +87,13 @@ function FlowerGarden({
   newlyBloomed,
   maybe,
   newlySprouted,
+  showThankYou = true,
 }: {
   responded: number;
   newlyBloomed: number;
   maybe: number;
   newlySprouted: number;
+  showThankYou?: boolean;
 }) {
   if (responded === 0 && maybe === 0) return null;
 
@@ -137,9 +139,11 @@ function FlowerGarden({
           );
         })}
       </div>
-      <p className="font-handwritten text-sage text-xl mt-5">
-        thank you to everyone who&apos;s already replied!
-      </p>
+      {showThankYou && (
+        <p className="font-handwritten text-sage text-xl mt-5">
+          thank you to everyone who&apos;s already replied!
+        </p>
+      )}
     </div>
   );
 }
@@ -278,14 +282,14 @@ export default function RSVP() {
     }
   };
 
-  const garden = (
-    <FlowerGarden
-      responded={gardenCount.responded}
-      newlyBloomed={newlyBloomed}
-      maybe={gardenCount.maybe}
-      newlySprouted={newlySprouted}
-    />
-  );
+  const gardenProps = {
+    responded: gardenCount.responded,
+    newlyBloomed,
+    maybe: gardenCount.maybe,
+    newlySprouted,
+  };
+  const garden = <FlowerGarden {...gardenProps} />;
+  const gardenPostSubmit = <FlowerGarden {...gardenProps} showThankYou={false} />;
 
   const bloomOverlay = blooming && bloomFlowers.length > 0 && (
     <div
@@ -325,7 +329,7 @@ export default function RSVP() {
           className="max-w-2xl mx-auto px-6 py-16 flex flex-col items-center gap-8 transition-opacity duration-1000"
           style={{ opacity: gardenVisible ? 1 : 0 }}
         >
-          {garden}
+          {gardenPostSubmit}
           <a
             href="/"
             className="inline-block px-8 py-3 bg-sage text-white text-sm tracking-widest uppercase rounded-full hover:bg-sage-dark transition-colors"
