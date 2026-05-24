@@ -23,6 +23,7 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://juliajon.com"),
   title: "Julia & Jonathan | May 29, 2027",
   description: "Julia & Jonathan's wedding — May 29, 2027 in Canmore, Alberta",
   openGraph: {
