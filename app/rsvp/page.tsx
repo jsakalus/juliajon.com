@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import PeanutCelebration from "../components/PeanutCelebration";
 
@@ -167,6 +167,11 @@ export default function RSVP() {
   const [gardenVisible, setGardenVisible] = useState(false);
   const [showMaybePop, setShowMaybePop] = useState(false);
   const [showYesRun, setShowYesRun] = useState(false);
+  const [showYesDinner, setShowYesDinner] = useState(false);
+  const [showPartySlide, setShowPartySlide] = useState(false);
+  const [showAirplane, setShowAirplane] = useState(false);
+  const [showVan, setShowVan] = useState(false);
+  const snoreCtxRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     fetch("/api/rsvp/count", { cache: "no-store" })
@@ -200,34 +205,155 @@ export default function RSVP() {
     }
   };
 
-  const playHurrah = () => {
+  const handleYesClick = (memberId: string) => {
+    updateResponse(memberId, "wedding_attending_status", "yes");
+    setShowYesRun(true);
+    setTimeout(() => setShowYesRun(false), 2100);
+  };
+
+  const playAirplaneSound = () => {
     try {
       const ctx = new AudioContext();
-      // Bright C major arpeggio — C5, E5, G5, C6
-      const notes = [523, 659, 784, 1047];
-      notes.forEach((freq, i) => {
+      const bufLen = ctx.sampleRate * 1.8;
+      const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < bufLen; i++) d[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(600, ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(3500, ctx.currentTime + 1.8);
+      filter.Q.value = 1.5;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.35, ctx.currentTime + 1.4);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.8);
+      noise.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+      noise.start(); noise.stop(ctx.currentTime + 1.8);
+    } catch { /* audio not supported */ }
+  };
+
+  const handleAirplaneClick = (memberId: string) => {
+    updateResponse(memberId, "travel_mode", "flying_booked");
+    playAirplaneSound();
+    setShowAirplane(true);
+    setTimeout(() => setShowAirplane(false), 1900);
+  };
+
+  const handleVanHover = () => {
+    if (showVan) return;
+    setShowVan(true);
+    setTimeout(() => setShowVan(false), 3600);
+  };
+
+  const playBeatbox = () => {
+    try {
+      const ctx = new AudioContext();
+      const kick = (t: number) => {
         const osc = ctx.createOscillator();
         const g = ctx.createGain();
-        osc.connect(g);
-        g.connect(ctx.destination);
+        osc.connect(g); g.connect(ctx.destination);
         osc.type = "sine";
-        osc.frequency.value = freq;
-        const t = ctx.currentTime + i * 0.09;
-        g.gain.setValueAtTime(0.32, t);
+        osc.frequency.setValueAtTime(160, t);
+        osc.frequency.exponentialRampToValueAtTime(40, t + 0.15);
+        g.gain.setValueAtTime(0.9, t);
         g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-        osc.start(t);
-        osc.stop(t + 0.2);
-      });
-    } catch {
-      // audio not supported
+        osc.start(t); osc.stop(t + 0.2);
+      };
+      const hat = (t: number) => {
+        const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.05), ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        const src = ctx.createBufferSource(); src.buffer = buf;
+        const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 7000;
+        const g = ctx.createGain();
+        src.connect(f); f.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+        src.start(t);
+      };
+      const snare = (t: number) => {
+        const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.1), ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        const src = ctx.createBufferSource(); src.buffer = buf;
+        const g = ctx.createGain();
+        src.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.45, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        src.start(t);
+      };
+      const b = 60 / 130; // beat at 130 bpm
+      kick(ctx.currentTime);         hat(ctx.currentTime);
+      hat(ctx.currentTime + b * 0.5);
+      snare(ctx.currentTime + b);    hat(ctx.currentTime + b);
+      hat(ctx.currentTime + b * 1.5);
+      kick(ctx.currentTime + b * 2); hat(ctx.currentTime + b * 2);
+      kick(ctx.currentTime + b * 2.5);
+      snare(ctx.currentTime + b * 3); hat(ctx.currentTime + b * 3);
+      hat(ctx.currentTime + b * 3.5);
+    } catch { /* audio not supported */ }
+  };
+
+  const startSnore = () => {
+    try {
+      if (snoreCtxRef.current) return;
+      const ctx = new AudioContext();
+      snoreCtxRef.current = ctx;
+
+      // Looped noise through a low-pass for that muffled snore quality
+      const bufLen = ctx.sampleRate;
+      const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < bufLen; i++) d[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      noise.loop = true;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 160;
+      filter.Q.value = 3;
+
+      const master = ctx.createGain();
+      master.gain.value = 0.1;
+
+      // Slow LFO for breathing rhythm (~0.6 Hz)
+      const lfo = ctx.createOscillator();
+      lfo.type = "sine";
+      lfo.frequency.value = 0.6;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 0.09;
+      lfo.connect(lfoGain);
+      lfoGain.connect(master.gain);
+
+      noise.connect(filter);
+      filter.connect(master);
+      master.connect(ctx.destination);
+
+      lfo.start();
+      noise.start();
+    } catch { /* audio not supported */ }
+  };
+
+  const stopSnore = () => {
+    if (snoreCtxRef.current) {
+      snoreCtxRef.current.close().catch(() => {});
+      snoreCtxRef.current = null;
     }
   };
 
-  const handleYesClick = (memberId: string) => {
-    updateResponse(memberId, "wedding_attending_status", "yes");
-    playHurrah();
-    setShowYesRun(true);
-    setTimeout(() => setShowYesRun(false), 2100);
+  const handlePartyClick = (memberId: string) => {
+    updateResponse(memberId, "staying_late", true);
+    playBeatbox();
+    setShowPartySlide(true);
+    setTimeout(() => setShowPartySlide(false), 1600);
+  };
+
+  const handleYesDinnerClick = (memberId: string) => {
+    updateResponse(memberId, "welcome_dinner_status", "yes");
+    setShowYesDinner(true);
+    setTimeout(() => setShowYesDinner(false), 1600);
   };
 
   const handleMaybeClick = (memberId: string) => {
@@ -437,6 +563,44 @@ export default function RSVP() {
             width={140}
             height={140}
             style={{ animation: "yes-run 2s linear forwards" }}
+          />
+        </div>
+      )}
+
+      {showAirplane && (
+        <div className="fixed bottom-0 left-0 pointer-events-none z-50 text-6xl"
+          style={{ animation: "airplane-fly 1.9s ease-in forwards" }}>
+          ✈️
+        </div>
+      )}
+
+      {showVan && (
+        <div className="fixed bottom-5 right-0 pointer-events-none z-50 text-6xl"
+          style={{ animation: "van-drive 3.5s linear forwards" }}>
+          🚐
+        </div>
+      )}
+
+      {showPartySlide && (
+        <div className="fixed left-0 top-1/3 pointer-events-none z-50">
+          <Image
+            src="/peanut/Party.png"
+            alt=""
+            width={120}
+            height={120}
+            style={{ animation: "party-slide 1.6s ease-in-out forwards" }}
+          />
+        </div>
+      )}
+
+      {showYesDinner && (
+        <div className="fixed right-0 bottom-0 pointer-events-none z-50">
+          <Image
+            src="/peanut/Yes dinner.png"
+            alt=""
+            width={120}
+            height={120}
+            style={{ animation: "yes-dinner-slide 1.6s ease-in-out forwards" }}
           />
         </div>
       )}
@@ -658,7 +822,7 @@ export default function RSVP() {
                                 value="yes"
                                 label="Yes"
                                 activeClass="bg-sage text-white border-sage"
-                                onClick={() => updateResponse(member.id, "welcome_dinner_status", "yes")}
+                                onClick={() => handleYesDinnerClick(member.id)}
                               />
                               <StatusButton
                                 current={r?.welcome_dinner_status ?? null}
@@ -689,7 +853,7 @@ export default function RSVP() {
                               value="flying_booked"
                               label="Yep, booked!"
                               activeClass="bg-sage text-white border-sage"
-                              onClick={() => updateResponse(member.id, "travel_mode", "flying_booked")}
+                              onClick={() => handleAirplaneClick(member.id)}
                             />
                             <StatusButton
                               current={r?.travel_mode ?? null}
@@ -698,13 +862,15 @@ export default function RSVP() {
                               activeClass="bg-gold text-white border-gold"
                               onClick={() => updateResponse(member.id, "travel_mode", "flying_not_booked")}
                             />
-                            <StatusButton
-                              current={r?.travel_mode ?? null}
-                              value="driving"
-                              label="I'm driving"
-                              activeClass="bg-sage text-white border-sage"
-                              onClick={() => updateResponse(member.id, "travel_mode", "driving")}
-                            />
+                            <div className="inline-flex" onMouseEnter={handleVanHover}>
+                              <StatusButton
+                                current={r?.travel_mode ?? null}
+                                value="driving"
+                                label="I'm driving"
+                                activeClass="bg-sage text-white border-sage"
+                                onClick={() => updateResponse(member.id, "travel_mode", "driving")}
+                              />
+                            </div>
                           </div>
                         </div>
 
@@ -722,15 +888,25 @@ export default function RSVP() {
                               value={true}
                               label="Obviously 🎉"
                               activeClass="bg-lavender text-white border-lavender"
-                              onClick={() => updateResponse(member.id, "staying_late", true)}
+                              onClick={() => handlePartyClick(member.id)}
                             />
-                            <BoolButton
-                              current={r?.staying_late ?? null}
-                              value={false}
-                              label="I'll slip out early"
-                              activeClass="bg-brown-light text-white border-brown-light"
-                              onClick={() => updateResponse(member.id, "staying_late", false)}
-                            />
+                            <div className="relative group inline-flex items-center" onMouseEnter={startSnore} onMouseLeave={stopSnore}>
+                              <Image
+                                src="/peanut/Slip out early.png"
+                                alt=""
+                                width={52}
+                                height={52}
+                                className="absolute left-full ml-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                style={{ height: "auto" }}
+                              />
+                              <BoolButton
+                                current={r?.staying_late ?? null}
+                                value={false}
+                                label="I'll slip out early"
+                                activeClass="bg-brown-light text-white border-brown-light"
+                                onClick={() => updateResponse(member.id, "staying_late", false)}
+                              />
+                            </div>
                           </div>
                         </div>
 

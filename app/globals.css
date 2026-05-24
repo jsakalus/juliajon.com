@@ -72,6 +72,31 @@ body {
   to   { opacity: 0; }
 }
 
+@keyframes yes-dinner-slide {
+  0%   { transform: translateX(120%); }
+  25%  { transform: translateX(0);    }
+  75%  { transform: translateX(0);    }
+  100% { transform: translateX(120%); }
+}
+
+@keyframes party-slide {
+  0%   { transform: translateX(-120%); }
+  25%  { transform: translateX(0);     }
+  75%  { transform: translateX(0);     }
+  100% { transform: translateX(-120%); }
+}
+
+@keyframes airplane-fly {
+  0%   { transform: translate(0, 0);          opacity: 1; }
+  100% { transform: translate(115vw, -115vh); opacity: 0; }
+}
+
+@keyframes van-drive {
+  0%   { transform: translateX(0);      opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateX(-130vw); opacity: 0; }
+}
+
 @keyframes slide-in-left {
   from { transform: translateX(-105%); }
   to   { transform: translateX(0); }
