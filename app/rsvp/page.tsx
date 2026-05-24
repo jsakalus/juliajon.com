@@ -165,6 +165,7 @@ export default function RSVP() {
   const [bloomFading, setBloomFading] = useState(false);
   const [bloomFlowers, setBloomFlowers] = useState<string[]>([]);
   const [gardenVisible, setGardenVisible] = useState(false);
+  const [showMaybePop, setShowMaybePop] = useState(false);
 
   useEffect(() => {
     fetch("/api/rsvp/count", { cache: "no-store" })
@@ -172,6 +173,50 @@ export default function RSVP() {
       .then(setGardenCount)
       .catch(() => {});
   }, []);
+
+  const playBoing = () => {
+    try {
+      const ctx = new AudioContext();
+      const delay = 0.15;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(310, ctx.currentTime + delay);
+      osc.frequency.exponentialRampToValueAtTime(68, ctx.currentTime + delay + 0.7);
+
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.setValueAtTime(0.5, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 1.0);
+
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + delay + 1.0);
+    } catch {
+      // audio not supported
+    }
+  };
+
+  const handleMaybeClick = (memberId: string) => {
+    setResponses((prev) => ({
+      ...prev,
+      [memberId]: {
+        ...prev[memberId],
+        wedding_attending_status: "maybe",
+        welcome_dinner_status: null,
+        travel_mode: null,
+        staying_late: null,
+        dietary_notes: "",
+        email: "",
+        cell: "",
+      },
+    }));
+    playBoing();
+    setShowMaybePop(true);
+    setTimeout(() => setShowMaybePop(false), 1400);
+  };
 
   const updateResponse = (guestId: string, field: keyof RsvpEntry, value: unknown) => {
     setResponses((prev) => ({ ...prev, [guestId]: { ...prev[guestId], [field]: value } }));
@@ -353,6 +398,18 @@ export default function RSVP() {
     <>
       {showPeanut && <PeanutCelebration onDismiss={() => setShowPeanut(false)} />}
 
+      {showMaybePop && (
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+          <Image
+            src="/peanut/Maybe.png"
+            alt=""
+            width={220}
+            height={220}
+            style={{ animation: "maybe-boing 1.4s ease-out forwards" }}
+          />
+        </div>
+      )}
+
       <div className="relative overflow-x-hidden">
 
         <div className="max-w-2xl mx-auto px-6">
@@ -495,27 +552,25 @@ export default function RSVP() {
                               value="maybe"
                               label="Maybe"
                               activeClass="bg-gold text-white border-gold"
-                              onClick={() => setResponses((prev) => ({
-                                ...prev,
-                                [member.id]: {
-                                  ...prev[member.id],
-                                  wedding_attending_status: "maybe",
-                                  welcome_dinner_status: null,
-                                  travel_mode: null,
-                                  staying_late: null,
-                                  dietary_notes: "",
-                                  email: "",
-                                  cell: "",
-                                },
-                              }))}
+                              onClick={() => handleMaybeClick(member.id)}
                             />
-                            <StatusButton
-                              current={r?.wedding_attending_status ?? null}
-                              value="no"
-                              label="Regretfully, no"
-                              activeClass="bg-mauve text-white border-mauve"
-                              onClick={() => updateResponse(member.id, "wedding_attending_status", "no")}
-                            />
+                            <div className="relative group inline-flex items-center">
+                              <StatusButton
+                                current={r?.wedding_attending_status ?? null}
+                                value="no"
+                                label="Regretfully, no"
+                                activeClass="bg-mauve text-white border-mauve"
+                                onClick={() => updateResponse(member.id, "wedding_attending_status", "no")}
+                              />
+                              <Image
+                                src="/peanut/Regretfully no.png"
+                                alt=""
+                                width={48}
+                                height={48}
+                                className="absolute left-full ml-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                style={{ width: 44, height: "auto" }}
+                              />
+                            </div>
                           </div>
                           {currentlySelectingNo && (
                             <p className="text-xs text-brown-light mt-1 leading-relaxed">
