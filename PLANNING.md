@@ -77,11 +77,14 @@
 ### Phase 3 — Page Content ← IN PROGRESS
 
 #### Mobile Nav (global — must be done first)
-- [ ] Replace the current nav with a responsive version: full nav on desktop, hamburger menu on mobile
+- ✓ Replaced the current nav with a responsive version: full nav on desktop, hamburger menu on mobile
 
 #### Home (`/`)
-- [ ] Finalize hero copy (names, tagline, date, venue)
-- [ ] Add any photos (engagement photos, venue, etc.)
+- ✓ Hero copy finalized
+- [ ] Add photos and fun elements (engagement photos, venue, etc.)
+
+#### Gamification ← IN PROGRESS
+- [ ] TBD — details to be defined
 
 #### Our Story (`/our-story`) ← NOT STARTED
 - [ ] Create page with Julia & Jonathan's story
@@ -109,7 +112,7 @@
 #### FAQ (`/faq`)
 - [ ] Write answers to common questions (dress code, kids, gifts, etc.)
 
-#### Registry (`/registry`) ← PARTIALLY COMPLETE
+#### Registry (`/registry`) ← MOSTLY COMPLETE
 
 **What's built:**
 - ✓ `registry_items` and `registry_contributions` tables created in Supabase
@@ -129,10 +132,11 @@
 - ✓ Page re-fetches items after any contribution to update UI live
 
 **Still needed:**
-- [ ] Run the SQL below to populate `registry_items` table
-- [ ] Add `external_url` for items/funds that are missing links (see list below)
-- [ ] Add `SHIPPING_ADDRESS` env var to `.env.local` AND Vercel dashboard
+- ✓ `registry_items` table populated
+- ✓ `SHIPPING_ADDRESS` env var set in `.env.local` and Vercel dashboard
 - ✓ Skydiving Fund goal set to $3,000
+- [ ] Content review with Julia & Jon to finalize items, descriptions, and external URLs
+- [ ] Minor UX tweaks
 
 **SQL to populate registry_items** (run in Supabase SQL editor):
 ```sql
@@ -184,6 +188,7 @@ update registry_items set description = 'The peacock ones.' where name = 'Bolesl
 - [ ] Test RSVP end-to-end on live site
 - [ ] Add last names for single-name guests (needed for name search to work)
 - [ ] Finalize welcome dinner invite list (`invited_to_welcome_dinner` in Supabase)
+- [ ] Minor UX tweaks
 
 ##### RSVP Data Flow
 All form fields live in React state (`responses: Record<guestId, RsvpEntry>`) until Submit is clicked. On submit, POSTed to `/api/rsvp/submit` → upserted to `rsvp_responses` (one row per guest). If tab is closed before submit, nothing is saved.
