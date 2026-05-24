@@ -117,7 +117,7 @@ function FlowerGarden({
         })}
       </div>
       <p className="font-handwritten text-sage text-xl mt-5">
-        thank you to everyone who&apos;s already replied! ↩
+        thank you to everyone who&apos;s already replied!
       </p>
     </div>
   );
@@ -139,7 +139,7 @@ export default function RSVP() {
   const [bloomFlowers, setBloomFlowers] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("/api/rsvp/count")
+    fetch("/api/rsvp/count", { cache: "no-store" })
       .then((r) => r.json())
       .then(setGardenCount)
       .catch(() => {});
@@ -204,9 +204,12 @@ export default function RSVP() {
       body: JSON.stringify({ responses: Object.values(responses) }),
     });
 
-    const yesCount = result?.members.filter(
-      (m) => responses[m.id]?.wedding_attending_status === "yes"
-    ).length ?? 0;
+    const yesCount = result?.members.filter((m) => {
+      const wasAlreadyYes = result.existingResponses?.find(
+        (e) => e.guest_id === m.id
+      )?.wedding_attending_status === "yes";
+      return responses[m.id]?.wedding_attending_status === "yes" && !wasAlreadyYes;
+    }).length ?? 0;
 
     const prevResponded = gardenCount.responded;
     const myFlowers = Array.from({ length: yesCount }, (_, i) =>
@@ -326,13 +329,12 @@ export default function RSVP() {
 
             {/* Deadline */}
             <p className="font-sans text-brown-light text-sm md:text-base tracking-wide mt-1">
-              or by March 1, 2027
+              or by Jan 1, 2027
             </p>
 
             {/* Subhead */}
             <p className="font-serif italic text-xl md:text-2xl text-brown-light mt-4">
               (this really helps us)
-              <span className="ml-2 not-italic">🌿</span>
             </p>
           </div>
 
@@ -380,14 +382,6 @@ export default function RSVP() {
               >
                 {loading ? "Searching…" : "Find My Invitation"}
               </button>
-              <span
-                className="font-handwritten text-brown-light text-lg leading-tight hidden sm:block"
-                style={{ transform: "rotate(-3deg)" }}
-              >
-                we promise
-                <br />
-                it&apos;s quick
-              </span>
             </div>
           </form>
 
