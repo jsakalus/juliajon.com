@@ -77,11 +77,54 @@
 ### Phase 3 — Page Content ← IN PROGRESS
 
 #### Mobile Nav (global — must be done first)
-- [ ] Replace the current nav with a responsive version: full nav on desktop, hamburger menu on mobile
+- ✓ Replaced the current nav with a responsive version: full nav on desktop, hamburger menu on mobile
 
 #### Home (`/`)
-- [ ] Finalize hero copy (names, tagline, date, venue)
-- [ ] Add any photos (engagement photos, venue, etc.)
+- ✓ Hero copy finalized
+- [ ] Add photos and fun elements (engagement photos, venue, etc.)
+
+#### Gamification ← IN PROGRESS
+
+**Philosophy**: Playful Peanut (the dog) reactions scattered throughout the site — no libraries, all Web Audio API (synthesized sounds, no files) and CSS keyframe animations.
+
+**Home page (`app/page.tsx`, `app/components/PeanutRain.tsx`)**
+- ✓ On first visit, 35 Peanut face images rain from the top of the screen — varying sizes, speeds, and gentle diagonal drift. Plays once per browser session (guarded by `sessionStorage`).
+
+**RSVP page (`app/rsvp/page.tsx`, `app/globals.css`)**
+
+Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API — no audio files.
+
+| Button | Trigger | Animation | Sound |
+|---|---|---|---|
+| Yes, I'll be there | Click | `peanut-nav.png` grows from tiny → large as it runs diagonally top-left → bottom-right over 2s | None |
+| Maybe | Click | `Maybe.png` boings out from center of screen (springy scale keyframe) | Deep wompey boing — triangle wave 310Hz → 68Hz with 150ms delay |
+| Regretfully, no | Hover | `Regretfully no.png` appears small to the right of the button | None |
+| Yes (welcome dinner) | Click | `Yes dinner.png` slides in from right, holds, slides back — pinned to bottom of screen | None |
+| Obviously 🎉 (party) | Click | `Party.png` slides in from left, holds, slides back — pinned to mid-left | Beatbox: kick + snare + hi-hat pattern at 130 BPM |
+| I'll slip out early | Hover | `Slip out early.png` appears to the right of the button | Continuous snore — looped noise through 160Hz low-pass + 0.6Hz LFO breathing rhythm; stops on mouse leave |
+| Yep, booked! (flights) | Click | ✈️ emoji flies bottom-left → top-right diagonally | Rising bandpass whoosh — noise sweep 600Hz → 3500Hz |
+| I'm driving | Hover | 🚐 emoji drives right → left across the bottom of the screen | None |
+
+**CSS keyframes added to `app/globals.css`:**
+- `yes-run` — diagonal translate + scale grow
+- `maybe-boing` — springy scale-in, hold, fade out
+- `yes-dinner-slide` — translateX in/hold/out from right
+- `party-slide` — translateX in/hold/out from left
+- `airplane-fly` — diagonal translate bottom-left to top-right
+- `van-drive` — translateX right to left
+
+**Nav (`app/components/NavBar.tsx`)**
+| Trigger | Animation |
+|---|---|
+| Hover "FAQ" nav link (desktop) | `FAQ.png` slides in diagonally from top-right, overlaps nav bottom edge slightly |
+
+**RSVP hero (`app/rsvp/page.tsx`)**
+| Element | Trigger | Animation |
+|---|---|---|
+| "Please" bouncing text | Hover | `Please.png` drops down onto the text (spring scale-in) |
+
+**Still to do / ideas:**
+- [ ] More Peanut reactions on other pages (Registry, etc.)
 
 #### Our Story (`/our-story`) ← NOT STARTED
 - [ ] Create page with Julia & Jonathan's story
@@ -109,7 +152,7 @@
 #### FAQ (`/faq`)
 - [ ] Write answers to common questions (dress code, kids, gifts, etc.)
 
-#### Registry (`/registry`) ← PARTIALLY COMPLETE
+#### Registry (`/registry`) ← MOSTLY COMPLETE
 
 **What's built:**
 - ✓ `registry_items` and `registry_contributions` tables created in Supabase
@@ -129,10 +172,11 @@
 - ✓ Page re-fetches items after any contribution to update UI live
 
 **Still needed:**
-- [ ] Run the SQL below to populate `registry_items` table
-- [ ] Add `external_url` for items/funds that are missing links (see list below)
-- [ ] Add `SHIPPING_ADDRESS` env var to `.env.local` AND Vercel dashboard
+- ✓ `registry_items` table populated
+- ✓ `SHIPPING_ADDRESS` env var set in `.env.local` and Vercel dashboard
 - ✓ Skydiving Fund goal set to $3,000
+- [ ] Content review with Julia & Jon to finalize items, descriptions, and external URLs
+- [ ] Minor UX tweaks
 
 **SQL to populate registry_items** (run in Supabase SQL editor):
 ```sql
@@ -184,6 +228,7 @@ update registry_items set description = 'The peacock ones.' where name = 'Bolesl
 - [ ] Test RSVP end-to-end on live site
 - [ ] Add last names for single-name guests (needed for name search to work)
 - [ ] Finalize welcome dinner invite list (`invited_to_welcome_dinner` in Supabase)
+- [ ] Minor UX tweaks
 
 ##### RSVP Data Flow
 All form fields live in React state (`responses: Record<guestId, RsvpEntry>`) until Submit is clicked. On submit, POSTed to `/api/rsvp/submit` → upserted to `rsvp_responses` (one row per guest). If tab is closed before submit, nothing is saved.

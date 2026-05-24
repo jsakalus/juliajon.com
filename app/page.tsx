@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Countdown from "./components/Countdown";
+import PeanutRain from "./components/PeanutRain";
 
 const pages = [
   { href: "/schedule",      label: "Schedule",      sub: "Weekend Itinerary",              btn: "SEE SCHEDULE",   img: "/nav/schedule.png",      btnClass: "bg-sage" },
@@ -14,6 +15,7 @@ const pages = [
 export default function Home() {
   return (
     <div className="relative overflow-x-hidden">
+      <PeanutRain />
 
       {/* Hero — fills viewport */}
       <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center py-8 px-6 text-center gap-3 relative z-10">
