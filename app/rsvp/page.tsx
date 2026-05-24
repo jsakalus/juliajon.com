@@ -235,6 +235,10 @@ export default function RSVP() {
       const wasYes = result?.existingResponses?.find((e) => e.guest_id === m.id)?.wedding_attending_status === "yes";
       return responses[m.id]?.wedding_attending_status === "yes" && !wasYes;
     });
+    const upgradedFromMaybe = members.filter((m) => {
+      const wasMaybe = result?.existingResponses?.find((e) => e.guest_id === m.id)?.wedding_attending_status === "maybe";
+      return responses[m.id]?.wedding_attending_status === "yes" && wasMaybe;
+    });
     const downgradedToMaybe = members.filter((m) => {
       const wasYes = result?.existingResponses?.find((e) => e.guest_id === m.id)?.wedding_attending_status === "yes";
       return responses[m.id]?.wedding_attending_status === "maybe" && wasYes;
@@ -258,7 +262,7 @@ export default function RSVP() {
     setGardenCount((prev) => ({
       ...prev,
       responded: prev.responded + yesCount - downgradedToMaybe.length,
-      maybe: prev.maybe + allNewSeedlings,
+      maybe: prev.maybe + allNewSeedlings - upgradedFromMaybe.length,
     }));
     setSubmitting(false);
     setSubmitted(true);
