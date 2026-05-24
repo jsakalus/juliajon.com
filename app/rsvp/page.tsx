@@ -272,6 +272,14 @@ export default function RSVP() {
     setSubmitted(true);
     setShowPeanut(true);
 
+    // Save the searched guest's ID + name so the registry page can attribute contributions
+    const searchedGuest = result?.members[0];
+    if (searchedGuest) {
+      localStorage.setItem("rsvp_guest_id", searchedGuest.id);
+      const name = [searchedGuest.first_name, searchedGuest.last_name].filter(Boolean).join(" ");
+      if (name) localStorage.setItem("rsvp_guest_name", name);
+    }
+
     if (myFlowers.length > 0) {
       setBlooming(true);
       setTimeout(() => setBloomFading(true), 3200);
@@ -452,6 +460,7 @@ export default function RSVP() {
                 const existingResponse = result.existingResponses?.find((e) => e.guest_id === member.id);
                 const previouslyDeclined = existingResponse?.wedding_attending_status === "no";
                 const currentlySelectingNo = r?.wedding_attending_status === "no";
+                const currentlySelectingMaybe = r?.wedding_attending_status === "maybe";
 
                 return (
                   <div key={member.id} className="bg-white p-6 flex flex-col gap-5 rounded-2xl shadow-sm">
@@ -486,7 +495,19 @@ export default function RSVP() {
                               value="maybe"
                               label="Maybe"
                               activeClass="bg-gold text-white border-gold"
-                              onClick={() => updateResponse(member.id, "wedding_attending_status", "maybe")}
+                              onClick={() => setResponses((prev) => ({
+                                ...prev,
+                                [member.id]: {
+                                  ...prev[member.id],
+                                  wedding_attending_status: "maybe",
+                                  welcome_dinner_status: null,
+                                  travel_mode: null,
+                                  staying_late: null,
+                                  dietary_notes: "",
+                                  email: "",
+                                  cell: "",
+                                },
+                              }))}
                             />
                             <StatusButton
                               current={r?.wedding_attending_status ?? null}
@@ -522,6 +543,9 @@ export default function RSVP() {
                             />
                           </div>
                         )}
+
+                        {!currentlySelectingMaybe && (
+                        <>
 
                         {/* Welcome dinner */}
                         {result.party.invited_to_welcome_dinner && (
@@ -652,6 +676,9 @@ export default function RSVP() {
                             </div>
                           </div>
                         </div>
+
+                        </>
+                        )}
                         </>
                         )}
                       </>
