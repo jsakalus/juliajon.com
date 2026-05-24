@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
 export default function PeanutCelebration({
@@ -12,20 +12,18 @@ export default function PeanutCelebration({
 }) {
   const [leaving, setLeaving] = useState(false);
 
-  const dismiss = () => {
-    if (permanent || leaving) return;
-    setLeaving(true);
-    setTimeout(onDismiss, 250);
-  };
+  useEffect(() => {
+    if (permanent) return;
+    const timer = setTimeout(() => {
+      setLeaving(true);
+      setTimeout(onDismiss, 250);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [permanent, onDismiss]);
 
   return (
-    <div
-      className={`fixed inset-0 z-50 ${permanent ? "" : "cursor-pointer"}`}
-      onClick={dismiss}
-      aria-label={permanent ? undefined : "Tap to dismiss"}
-    >
+    <div className="fixed bottom-0 left-0 z-50 pointer-events-none">
       <div
-        className="absolute bottom-0 left-0"
         style={{
           animation: leaving
             ? "slide-out-left 0.25s ease-in forwards"
@@ -37,7 +35,7 @@ export default function PeanutCelebration({
           alt="Peanut celebrating"
           width={800}
           height={1000}
-          className="object-contain h-[80vh] w-auto"
+          className="object-contain h-[50vh] w-auto"
           priority
         />
       </div>

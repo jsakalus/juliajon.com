@@ -85,11 +85,15 @@ const BLOOMED_FLOWERS = ["🌸", "🌼", "🌻", "🌷", "🌺"];
 function FlowerGarden({
   responded,
   newlyBloomed,
+  maybe,
+  newlySprouted,
 }: {
   responded: number;
   newlyBloomed: number;
+  maybe: number;
+  newlySprouted: number;
 }) {
-  if (responded === 0) return null;
+  if (responded === 0 && maybe === 0) return null;
 
   return (
     <div className="text-center py-10">
@@ -102,7 +106,7 @@ function FlowerGarden({
           const emoji = BLOOMED_FLOWERS[i % BLOOMED_FLOWERS.length];
           return (
             <span
-              key={i}
+              key={`flower-${i}`}
               className="text-2xl inline-block"
               style={{
                 animation: "flower-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
@@ -112,6 +116,23 @@ function FlowerGarden({
               }}
             >
               {emoji}
+            </span>
+          );
+        })}
+        {Array.from({ length: maybe }).map((_, i) => {
+          const isNew = newlySprouted > 0 && i >= maybe - newlySprouted;
+          return (
+            <span
+              key={`seedling-${i}`}
+              className="text-2xl inline-block"
+              style={{
+                animation: "flower-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+                animationDelay: isNew
+                  ? `${(i - (maybe - newlySprouted)) * 0.12}s`
+                  : `${(responded + i) * 0.025}s`,
+              }}
+            >
+              🌱
             </span>
           );
         })}
@@ -133,10 +154,13 @@ export default function RSVP() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [showPeanut, setShowPeanut] = useState(false);
-  const [gardenCount, setGardenCount] = useState({ responded: 0, total: 0 });
+  const [gardenCount, setGardenCount] = useState({ responded: 0, maybe: 0, total: 0 });
   const [newlyBloomed, setNewlyBloomed] = useState(0);
+  const [newlySprouted, setNewlySprouted] = useState(0);
   const [blooming, setBlooming] = useState(false);
+  const [bloomFading, setBloomFading] = useState(false);
   const [bloomFlowers, setBloomFlowers] = useState<string[]>([]);
+  const [gardenVisible, setGardenVisible] = useState(false);
 
   useEffect(() => {
     fetch("/api/rsvp/count", { cache: "no-store" })
@@ -204,28 +228,49 @@ export default function RSVP() {
       body: JSON.stringify({ responses: Object.values(responses) }),
     });
 
-    const yesCount = result?.members.filter((m) => {
-      const wasAlreadyYes = result.existingResponses?.find(
-        (e) => e.guest_id === m.id
-      )?.wedding_attending_status === "yes";
-      return responses[m.id]?.wedding_attending_status === "yes" && !wasAlreadyYes;
-    }).length ?? 0;
-
+    const members = result?.members ?? [];
     const prevResponded = gardenCount.responded;
-    const myFlowers = Array.from({ length: yesCount }, (_, i) =>
-      BLOOMED_FLOWERS[(prevResponded + i) % BLOOMED_FLOWERS.length]
-    );
+
+    const newYesGuests = members.filter((m) => {
+      const wasYes = result?.existingResponses?.find((e) => e.guest_id === m.id)?.wedding_attending_status === "yes";
+      return responses[m.id]?.wedding_attending_status === "yes" && !wasYes;
+    });
+    const downgradedToMaybe = members.filter((m) => {
+      const wasYes = result?.existingResponses?.find((e) => e.guest_id === m.id)?.wedding_attending_status === "yes";
+      return responses[m.id]?.wedding_attending_status === "maybe" && wasYes;
+    });
+    const newFirstTimeMaybe = members.filter((m) => {
+      const prev = result?.existingResponses?.find((e) => e.guest_id === m.id)?.wedding_attending_status;
+      return responses[m.id]?.wedding_attending_status === "maybe" && !prev;
+    });
+
+    const yesCount = newYesGuests.length;
+    const allNewSeedlings = downgradedToMaybe.length + newFirstTimeMaybe.length;
+    const myFlowers: string[] = [
+      ...newYesGuests.map((_, i) => BLOOMED_FLOWERS[(prevResponded + i) % BLOOMED_FLOWERS.length]),
+      ...downgradedToMaybe.map(() => "🌱"),
+      ...newFirstTimeMaybe.map(() => "🌱"),
+    ];
 
     setBloomFlowers(myFlowers);
     setNewlyBloomed(yesCount);
-    setGardenCount((prev) => ({ ...prev, responded: prev.responded + yesCount }));
+    setNewlySprouted(allNewSeedlings);
+    setGardenCount((prev) => ({
+      ...prev,
+      responded: prev.responded + yesCount - downgradedToMaybe.length,
+      maybe: prev.maybe + allNewSeedlings,
+    }));
     setSubmitting(false);
     setSubmitted(true);
     setShowPeanut(true);
 
-    if (yesCount > 0) {
+    if (myFlowers.length > 0) {
       setBlooming(true);
-      setTimeout(() => setBlooming(false), 2800);
+      setTimeout(() => setBloomFading(true), 3200);
+      setTimeout(() => setGardenVisible(true), 3800);
+      setTimeout(() => { setBlooming(false); setBloomFading(false); }, 4200);
+    } else {
+      setGardenVisible(true);
     }
   };
 
@@ -233,11 +278,16 @@ export default function RSVP() {
     <FlowerGarden
       responded={gardenCount.responded}
       newlyBloomed={newlyBloomed}
+      maybe={gardenCount.maybe}
+      newlySprouted={newlySprouted}
     />
   );
 
   const bloomOverlay = blooming && bloomFlowers.length > 0 && (
-    <div className="fixed bottom-0 left-0 right-0 z-40 flex flex-col items-center pointer-events-none pb-6 gap-1">
+    <div
+      className="fixed inset-0 z-40 flex flex-col items-center justify-center pointer-events-none gap-2"
+      style={bloomFading ? { animation: "fade-out 1s ease-out forwards" } : undefined}
+    >
       {bloomFlowers.map((flower, i) => (
         <span
           key={i}
@@ -251,13 +301,13 @@ export default function RSVP() {
         </span>
       ))}
       <p
-        className="font-handwritten text-sage text-2xl"
+        className="font-handwritten text-sage text-4xl mt-2"
         style={{
           animation: "flower-bloom-big 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both",
           animationDelay: `${bloomFlowers.length * 0.3}s`,
         }}
       >
-        your flower just bloomed!
+        {bloomFlowers.every((f) => f === "🌱") ? "your seedling is planted" : "your flower is planted"}
       </p>
     </div>
   );
@@ -267,8 +317,17 @@ export default function RSVP() {
       <>
         {showPeanut && <PeanutCelebration onDismiss={() => setShowPeanut(false)} />}
         {bloomOverlay}
-        <div className="max-w-2xl mx-auto px-6 py-16">
+        <div
+          className="max-w-2xl mx-auto px-6 py-16 flex flex-col items-center gap-8 transition-opacity duration-1000"
+          style={{ opacity: gardenVisible ? 1 : 0 }}
+        >
           {garden}
+          <a
+            href="/"
+            className="inline-block px-8 py-3 bg-sage text-white text-sm tracking-widest uppercase rounded-full hover:bg-sage-dark transition-colors"
+          >
+            Wedding Details
+          </a>
         </div>
       </>
     );
@@ -450,7 +509,7 @@ export default function RSVP() {
                           </div>
                           {currentlySelectingNo && (
                             <p className="text-xs text-brown-light mt-1 leading-relaxed">
-                              Heads up — once you submit a &quot;no,&quot; we won&apos;t be able to change it here. If anything shifts, reach out to us directly.
+                              Heads up — once you RSVP no, we will assume you are not coming and there will not be a space for you at the venue. If anything shifts, reach out to us directly.
                             </p>
                           )}
                         </div>
@@ -525,14 +584,14 @@ export default function RSVP() {
                               current={r?.travel_mode ?? null}
                               value="flying_not_booked"
                               label="Not yet"
-                              activeClass="bg-brown-light text-white border-brown-light"
+                              activeClass="bg-gold text-white border-gold"
                               onClick={() => updateResponse(member.id, "travel_mode", "flying_not_booked")}
                             />
                             <StatusButton
                               current={r?.travel_mode ?? null}
                               value="driving"
                               label="I'm driving"
-                              activeClass="bg-terracotta text-white border-terracotta"
+                              activeClass="bg-sage text-white border-sage"
                               onClick={() => updateResponse(member.id, "travel_mode", "driving")}
                             />
                           </div>

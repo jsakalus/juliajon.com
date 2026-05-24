@@ -50,6 +50,11 @@ body {
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
 @keyframes slide-in-left {
   from { transform: translateX(-105%); }
   to   { transform: translateX(0); }
