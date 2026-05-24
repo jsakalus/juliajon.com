@@ -35,7 +35,7 @@ export default function FlowerBorders() {
         style={{ height: "70vh", transform: `translateX(-${slidePercent}%)`, opacity }}
       >
         <Image
-          src="/watercolor-flowers-border-left.png"
+          src="/borders/flowers-left.png"
           alt=""
           width={220}
           height={900}
@@ -47,7 +47,7 @@ export default function FlowerBorders() {
         style={{ height: "70vh", transform: `translateX(${slidePercent}%)`, opacity }}
       >
         <Image
-          src="/watercolor-flowers-border-right.png"
+          src="/borders/flowers-right.png"
           alt=""
           width={220}
           height={900}

@@ -31,7 +31,7 @@ export default function PeanutCelebration({
         }}
       >
         <Image
-          src="/peanut-celebrate.png"
+          src="/peanut/peanut-celebrate.png"
           alt="Peanut celebrating"
           width={800}
           height={1000}

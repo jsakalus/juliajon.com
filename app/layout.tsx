@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${nunito.variable} ${caveat.variable}`}>
       <head>
-        <link rel="preload" as="image" href="/peanut-celebrate.png" />
+        <link rel="preload" as="image" href="/peanut/peanut-celebrate.png" />
       </head>
       <body className="min-h-screen flex flex-col bg-beige text-brown font-sans">
 
