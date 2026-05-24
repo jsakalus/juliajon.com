@@ -21,7 +21,7 @@ export default function NavBar() {
       <div className="px-6 py-3 flex items-center justify-between">
         <Link href="/" aria-label="Home" onClick={() => setOpen(false)}>
           <Image
-            src="/dog.png"
+            src="/peanut/peanut-nav.png"
             alt="Peanut"
             width={44}
             height={44}

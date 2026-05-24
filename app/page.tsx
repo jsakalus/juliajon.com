@@ -3,12 +3,12 @@ import Link from "next/link";
 import Countdown from "./components/Countdown";
 
 const pages = [
-  { href: "/schedule",      label: "Schedule",      sub: "Weekend Itinerary",              btn: "SEE SCHEDULE",   img: "/Property 1=Schedule.png",      btnClass: "bg-sage" },
-  { href: "/travel",        label: "Travel",        sub: "Getting to Canmore",             btn: "TRAVEL INFO",    img: "/Property 1=Travel.png",         btnClass: "bg-sage" },
-  { href: "/where-to-stay", label: "Where to Stay", sub: "Accommodation Recommendations",  btn: "FIND A PLACE",   img: "/Property 1=Where to Stay.png",  btnClass: "bg-sage" },
-  { href: "/faq",           label: "FAQs",          sub: "Common questions answered",      btn: "GET ANSWERS",    img: "/Property 1=FAQs.png",           btnClass: "bg-sage" },
-  { href: "/registry",      label: "Registry",      sub: "Our wish list",                  btn: "VIEW REGISTRY",  img: "/Property 1=Registry.png",       btnClass: "bg-sage" },
-  { href: "/rsvp",          label: "RSVP",          sub: "Let us know if you're coming",   btn: "RSVP NOW",       img: "/Property 1=RSVP.png",           btnClass: "bg-mauve" },
+  { href: "/schedule",      label: "Schedule",      sub: "Weekend Itinerary",              btn: "SEE SCHEDULE",   img: "/nav/schedule.png",      btnClass: "bg-sage" },
+  { href: "/travel",        label: "Travel",        sub: "Getting to Canmore",             btn: "TRAVEL INFO",    img: "/nav/travel.png",         btnClass: "bg-sage" },
+  { href: "/where-to-stay", label: "Where to Stay", sub: "Accommodation Recommendations",  btn: "FIND A PLACE",   img: "/nav/where-to-stay.png",  btnClass: "bg-sage" },
+  { href: "/faq",           label: "FAQs",          sub: "Common questions answered",      btn: "GET ANSWERS",    img: "/nav/faqs.png",           btnClass: "bg-sage" },
+  { href: "/registry",      label: "Registry",      sub: "Our wish list",                  btn: "VIEW REGISTRY",  img: "/nav/registry.png",       btnClass: "bg-sage" },
+  { href: "/rsvp",          label: "RSVP",          sub: "Let us know if you're coming",   btn: "RSVP NOW",       img: "/nav/rsvp.png",           btnClass: "bg-mauve" },
 ];
 
 export default function Home() {
@@ -21,7 +21,7 @@ export default function Home() {
         <h1 className="font-serif text-6xl md:text-7xl text-brown font-semibold">Julia &amp; Jonathan</h1>
         <p className="font-sans text-sm tracking-[0.25em] uppercase text-brown-light">May 29, 2027</p>
         <Image
-          src="/Julia and Jonathan kiss.png"
+          src="/illustrations/julia-and-jonathan-kiss.png"
           alt="Julia and Jonathan"
           width={862}
           height={651}

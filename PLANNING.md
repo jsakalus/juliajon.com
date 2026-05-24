@@ -81,13 +81,21 @@
 
 #### Home (`/`)
 - [ ] Finalize hero copy (names, tagline, date, venue)
-- [ ] Add "Our Story" section or short intro blurb
 - [ ] Add any photos (engagement photos, venue, etc.)
 
-#### Schedule (`/schedule`)
-- [ ] Add ceremony time and location details
-- [ ] Add cocktail hour, reception, and any other events
-- [ ] Add welcome dinner details (visible to invited guests or all?)
+#### Our Story (`/our-story`) ← NOT STARTED
+- [ ] Create page with Julia & Jonathan's story
+- [ ] Content TBD — how they met, the proposal, etc.
+- [ ] Add to nav once content is ready
+
+#### Schedule (`/schedule`) ← MOSTLY COMPLETE
+- ✓ Page redesigned: "welcome to our / WEDDING WEEKEND" header, colored dot timeline with diamond day markers, watercolor illustrations, whimsical handwritten times
+- ✓ Friday May 28: Welcome Dinner (visible to everyone, "Kick off the weekend with us")
+- ✓ Saturday May 29: Ceremony (4:00 PM), Reception (5:00 PM)
+- ✓ Location names link to Google Maps
+- ✓ Images in /public/illustrations/, cleaner paths
+- [ ] Add cocktail hour if applicable
+- [ ] Fill in Welcome Dinner time once confirmed
 
 #### Travel (`/travel`)
 - [ ] Add nearest airports and driving directions to Canmore
