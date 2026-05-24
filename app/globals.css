@@ -50,6 +50,12 @@ body {
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
+@keyframes yes-run {
+  0%   { transform: translate(0, 0)          scale(0.25); opacity: 1; }
+  85%  { transform: translate(105vw, 105vh)  scale(2.4);  opacity: 1; }
+  100% { transform: translate(115vw, 115vh)  scale(2.6);  opacity: 0; }
+}
+
 @keyframes maybe-boing {
   0%   { transform: scale(0);    opacity: 1; }
   35%  { transform: scale(1.25); opacity: 1; }

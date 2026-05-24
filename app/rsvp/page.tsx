@@ -166,6 +166,7 @@ export default function RSVP() {
   const [bloomFlowers, setBloomFlowers] = useState<string[]>([]);
   const [gardenVisible, setGardenVisible] = useState(false);
   const [showMaybePop, setShowMaybePop] = useState(false);
+  const [showYesRun, setShowYesRun] = useState(false);
 
   useEffect(() => {
     fetch("/api/rsvp/count", { cache: "no-store" })
@@ -197,6 +198,36 @@ export default function RSVP() {
     } catch {
       // audio not supported
     }
+  };
+
+  const playHurrah = () => {
+    try {
+      const ctx = new AudioContext();
+      // Bright C major arpeggio — C5, E5, G5, C6
+      const notes = [523, 659, 784, 1047];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.09;
+        g.gain.setValueAtTime(0.32, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      });
+    } catch {
+      // audio not supported
+    }
+  };
+
+  const handleYesClick = (memberId: string) => {
+    updateResponse(memberId, "wedding_attending_status", "yes");
+    playHurrah();
+    setShowYesRun(true);
+    setTimeout(() => setShowYesRun(false), 2100);
   };
 
   const handleMaybeClick = (memberId: string) => {
@@ -398,6 +429,18 @@ export default function RSVP() {
     <>
       {showPeanut && <PeanutCelebration onDismiss={() => setShowPeanut(false)} />}
 
+      {showYesRun && (
+        <div className="fixed pointer-events-none z-50" style={{ top: -20, left: -20 }}>
+          <Image
+            src="/peanut/Yes wedding.png"
+            alt=""
+            width={140}
+            height={140}
+            style={{ animation: "yes-run 2s linear forwards" }}
+          />
+        </div>
+      )}
+
       {showMaybePop && (
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
           <Image
@@ -545,7 +588,7 @@ export default function RSVP() {
                               value="yes"
                               label="Yes, I'll be there"
                               activeClass="bg-sage text-white border-sage"
-                              onClick={() => updateResponse(member.id, "wedding_attending_status", "yes")}
+                              onClick={() => handleYesClick(member.id)}
                             />
                             <StatusButton
                               current={r?.wedding_attending_status ?? null}
