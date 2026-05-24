@@ -14,6 +14,7 @@ const links = [
 
 export default function NavBar() {
   const [open, setOpen] = useState(false);
+  const [faqHovered, setFaqHovered] = useState(false);
 
   return (
     <nav className="bg-sage relative pb-10 sticky top-0 z-50">
@@ -31,11 +32,23 @@ export default function NavBar() {
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-6 text-sm text-white/90 font-sans">
-          {links.map((l) => (
-            <Link key={l.href} href={l.href} className="hover:text-white transition-colors">
-              {l.label}
-            </Link>
-          ))}
+          {links.map((l) =>
+            l.href === "/faq" ? (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="hover:text-white transition-colors"
+                onMouseEnter={() => setFaqHovered(true)}
+                onMouseLeave={() => setFaqHovered(false)}
+              >
+                {l.label}
+              </Link>
+            ) : (
+              <Link key={l.href} href={l.href} className="hover:text-white transition-colors">
+                {l.label}
+              </Link>
+            )
+          )}
           <Link
             href="/rsvp"
             className="bg-white text-sage px-7 py-2.5 font-semibold tracking-wide hover:bg-beige transition-colors rounded-sm"
@@ -72,6 +85,21 @@ export default function NavBar() {
           </button>
         </div>
       </div>
+
+      {/* FAQ Peanut — slides in from right edge on FAQ hover, peeks out from side */}
+      {faqHovered && (
+        <div
+          className="fixed pointer-events-none"
+          style={{
+            top: "6px",
+            right: "-55px",
+            zIndex: 60,
+            animation: "faq-slide-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+          }}
+        >
+          <Image src="/peanut/FAQ.png" alt="" width={140} height={140} unoptimized />
+        </div>
+      )}
 
       {/* Paintbrush stroke bottom edge — beige wave overlays the sage padding */}
       <svg

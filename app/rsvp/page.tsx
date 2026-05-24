@@ -171,6 +171,7 @@ export default function RSVP() {
   const [showPartySlide, setShowPartySlide] = useState(false);
   const [showAirplane, setShowAirplane] = useState(false);
   const [showVan, setShowVan] = useState(false);
+  const [showPleasePeanut, setShowPleasePeanut] = useState(false);
   const snoreCtxRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
@@ -626,12 +627,35 @@ export default function RSVP() {
 
             {/* "Please RSVP" */}
             <div className="flex items-end justify-center gap-3 md:gap-5 mb-1">
-              <span
-                className="font-serif italic text-xl md:text-2xl text-brown font-normal pb-2 inline-block"
-                style={{ animation: "please-bounce 2s ease-in-out infinite" }}
+              <div
+                className="relative inline-block pb-2"
+                onMouseEnter={() => setShowPleasePeanut(true)}
+                onMouseLeave={() => setShowPleasePeanut(false)}
               >
-                Please
-              </span>
+                <span
+                  className="font-serif italic text-xl md:text-2xl text-brown font-normal inline-block"
+                  style={{ animation: "please-bounce 2s ease-in-out infinite" }}
+                >
+                  Please
+                </span>
+                {showPleasePeanut && (
+                  <Image
+                    src="/peanut/Please.png"
+                    alt=""
+                    width={80}
+                    height={80}
+                    unoptimized
+                    className="absolute pointer-events-none"
+                    style={{
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      animation: "please-lay 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+                      zIndex: 10,
+                    }}
+                  />
+                )}
+              </div>
               <span className="font-serif text-5xl md:text-7xl text-brown leading-none" style={{ fontWeight: 700 }}>
                 RSVP
               </span>

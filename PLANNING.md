@@ -113,9 +113,18 @@ Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API
 - `airplane-fly` — diagonal translate bottom-left to top-right
 - `van-drive` — translateX right to left
 
+**Nav (`app/components/NavBar.tsx`)**
+| Trigger | Animation |
+|---|---|
+| Hover "FAQ" nav link (desktop) | `FAQ.png` slides in diagonally from top-right, overlaps nav bottom edge slightly |
+
+**RSVP hero (`app/rsvp/page.tsx`)**
+| Element | Trigger | Animation |
+|---|---|---|
+| "Please" bouncing text | Hover | `Please.png` drops down onto the text (spring scale-in) |
+
 **Still to do / ideas:**
-- [ ] More Peanut reactions on other pages (FAQ, Registry, etc.)
-- [ ] `public/peanut/FAQ.png` and `public/peanut/Please.png` assets exist but are unused
+- [ ] More Peanut reactions on other pages (Registry, etc.)
 
 #### Our Story (`/our-story`) ← NOT STARTED
 - [ ] Create page with Julia & Jonathan's story
