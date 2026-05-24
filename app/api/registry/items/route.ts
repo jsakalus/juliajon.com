@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   const { data: contributions } = await getSupabase()
     .from("registry_contributions")
-    .select("registry_item_id, contribution_type, amount, guest_id");
+    .select("registry_item_id, contribution_type, amount, guest_id, guest_name");
 
   const enriched = (items ?? []).map((item) => {
     const itemContribs = (contributions ?? []).filter(
@@ -23,11 +23,14 @@ export async function GET(request: NextRequest) {
     const myContribs = guestId
       ? itemContribs.filter((c) => c.guest_id === guestId)
       : [];
+    const purchasers = itemContribs
+      .filter((c) => c.contribution_type === "purchased")
+      .map((c) => c.guest_name as string)
+      .filter(Boolean);
     return {
       ...item,
-      purchased:
-        item.type === "item" &&
-        itemContribs.some((c) => c.contribution_type === "purchased"),
+      purchased: purchasers.length > 0,
+      purchasers,
       total_contributed:
         item.type === "fund"
           ? itemContribs.reduce((sum, c) => sum + (c.amount ?? 0), 0)

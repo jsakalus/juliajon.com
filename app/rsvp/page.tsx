@@ -50,6 +50,15 @@ type BoolButtonProps = {
   onClick: () => void;
 };
 
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  const local = digits.startsWith("1") ? digits.slice(1) : digits;
+  const d = local.slice(0, 10);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `(${d.slice(0, 3)}) ${d.slice(3)}`;
+  return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+}
+
 function StatusButton({ current, value, label, activeClass, onClick }: StatusButtonProps) {
   const isActive = current === value;
   return (
@@ -419,7 +428,7 @@ export default function RSVP() {
         travel_mode: existing?.travel_mode ?? null,
         staying_late: existing?.staying_late ?? null,
         email: member.email ?? "",
-        cell: member.phone ?? "",
+        cell: member.phone ? formatPhone(member.phone) : "",
       };
     });
     setResponses(initial);
@@ -964,13 +973,23 @@ export default function RSVP() {
                             </div>
                             <div className="flex flex-col gap-1.5 flex-1">
                               <label className="text-xs text-brown-light">Cell</label>
-                              <input
-                                type="tel"
-                                value={r?.cell ?? ""}
-                                onChange={(e) => updateResponse(member.id, "cell", e.target.value)}
-                                className="border border-beige-dark bg-white px-3 py-2.5 text-sm w-full rounded-lg focus:outline-none focus:border-sage"
-                                placeholder="+1 (555) 000-0000"
-                              />
+                              <div className="flex items-center border border-beige-dark bg-white rounded-lg overflow-hidden focus-within:border-sage focus-within:ring-0 transition-colors">
+                                <span className="px-3 py-2.5 text-sm text-brown-light bg-beige border-r border-beige-dark select-none whitespace-nowrap">+1</span>
+                                <input
+                                  type="tel"
+                                  value={r?.cell ?? ""}
+                                  onChange={(e) => updateResponse(member.id, "cell", formatPhone(e.target.value))}
+                                  className="px-3 py-2.5 text-sm w-full focus:outline-none bg-white"
+                                  placeholder="(555) 000-0000"
+                                />
+                              </div>
+                              {(() => {
+                                const val = r?.cell ?? "";
+                                const digits = val.replace(/\D/g, "");
+                                return val !== "" && digits.length > 0 && digits.length < 10 ? (
+                                  <p className="text-xs text-red-400">US or Canada numbers only — enter 10 digits</p>
+                                ) : null;
+                              })()}
                             </div>
                           </div>
                         </div>

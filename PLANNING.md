@@ -156,20 +156,22 @@ Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API
 
 **What's built:**
 - ✓ `registry_items` and `registry_contributions` tables created in Supabase
-- ✓ Page layout: funds section first, then items, then "Already taken" (purchased) at bottom
-- ✓ Fund cards: name, description, "Contribute →" button (gold), progress bar (if goal set), total contributed, per-guest contribution ("You've contributed $X ♡") for identified guests. Unlimited funds (no goal) show total contributed as text only — no bar.
+- ✓ Page layout: funds section first, then items. Completed items/funds float to the bottom of their section automatically.
+- ✓ Fund cards: name, description, "Contribute →" button (gold), progress bar (if goal set), total contributed, per-guest contribution ("You've contributed $X ♡") for identified guests. Unlimited funds (no goal) show total contributed as text only — no bar. When goal is reached, button changes to "Goal reached ✓" and contributions are disabled.
 - ✓ Item cards: name, description, price, "View →" button (opens external URL), "Mark as purchased" underline link. Images displayed at top of card if `image_url` is set.
-- ✓ Purchased items: greyed out, struck through, moved to "Already taken" section at bottom
-- ✓ "Contribute →" opens in-page modal showing payment methods (Venmo/PayPal/e-transfer) + name search (if not identified) + amount input
+- ✓ Item quantity limits via `max_quantity` column (see DB schema below). `null` = unlimited (never greys out, always purchasable). `1` = one buyer only. `N` = N buyers; shows "X of N purchased" progress. Sold-out items dim to 60% opacity, image goes greyscale, "Mark as purchased" button hidden. Purchaser names are never shown publicly.
+- ✓ Multiple purchases supported: `registry_contributions` has no unique constraint — any number of rows per item are allowed.
+- ✓ "Contribute →" opens in-page modal. Step 1: payment info (Venmo/PayPal/e-transfer). Step 2: "Let us know how much you contributed" with name search (if not identified) + amount input.
 - ✓ "Mark as purchased" opens in-page modal showing who the purchase will be attributed to + confirm/cancel
 - ✓ Click tracking: "View →" link saves `{ item_id, item_name, item_type, timestamp }` to `registry_pending_click` localStorage key, opens URL in new tab
 - ✓ Return popup: on page load, checks localStorage for click within 2 hours → "Did you purchase [name]?" or "How much did you contribute?" modal
 - ✓ Guest name is **required** for all contributions — identity step always runs if `guestDisplayName` is null; API validates and rejects if missing
-- ✓ API route `GET /api/registry/items?guestId=xxx` — returns items enriched with `total_contributed`, `purchased`, and `my_contribution` (per-guest, if guestId provided)
+- ✓ API route `GET /api/registry/items?guestId=xxx` — returns items enriched with `total_contributed`, `purchased`, `purchasers` (array of names, used server-side only), and `my_contribution` (per-guest, if guestId provided)
 - ✓ API route `POST /api/registry/contribute` — saves to `registry_contributions`; rejects if `guest_name` is missing
 - ✓ API route `GET /api/registry/shipping-address` — returns `SHIPPING_ADDRESS` env var
 - ✓ Shipping address section at bottom: shows "View address →" button until guest is identified, then reveals address
 - ✓ Page re-fetches items after any contribution to update UI live
+- ✓ RSVP cell phone field: auto-formats as `(XXX) XXX-XXXX` with `+1` prefix badge; US/Canada only; shows inline error for incomplete numbers
 
 **Still needed:**
 - ✓ `registry_items` table populated
@@ -308,6 +310,7 @@ One row per item or fund shown on the registry page.
 | external_url | text | link to purchase site, Venmo, or e-transfer |
 | image_url | text | optional product photo URL |
 | display_order | int | controls sort order on the page |
+| max_quantity | int | **items only** — null = unlimited (never sold out); 1 = one buyer; N = N buyers. Run `ALTER TABLE registry_items ADD COLUMN max_quantity integer;` to add. |
 | is_active | boolean | default true; set false to hide without deleting |
 | created_at | timestamp | auto-set |
 

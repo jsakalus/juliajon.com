@@ -18,7 +18,9 @@ type RegistryItem = {
   external_url: string | null;
   image_url: string | null;
   display_order: number;
+  max_quantity: number | null;
   purchased: boolean;
+  purchasers: string[];
   total_contributed: number;
   my_contribution: number;
 };
@@ -220,9 +222,18 @@ export default function Registry() {
   }
 
   const needsIdentity = !guestDisplayName;
-  const funds = items.filter((i) => i.type === "fund");
-  const unpurchasedItems = items.filter((i) => i.type === "item" && !i.purchased);
-  const purchasedItems = items.filter((i) => i.type === "item" && i.purchased);
+
+  const rawFunds = items.filter((i) => i.type === "fund");
+  const funds = [
+    ...rawFunds.filter((f) => !(f.price && f.price > 0 && f.total_contributed >= f.price)),
+    ...rawFunds.filter((f) => !!(f.price && f.price > 0 && f.total_contributed >= f.price)),
+  ];
+
+  const rawItems = items.filter((i) => i.type === "item");
+  const allItems = [
+    ...rawItems.filter((i) => !(i.max_quantity !== null && i.purchasers.length >= i.max_quantity)),
+    ...rawItems.filter((i) => i.max_quantity !== null && i.purchasers.length >= i.max_quantity),
+  ];
 
   // ─── Identity step (shared across all modal modes) ───────────────────────
   const identityStep = (
@@ -337,9 +348,12 @@ export default function Registry() {
             )}
           </div>
 
-          {/* Payment info — always visible so they can send money first */}
+          {/* Step 1: send money */}
           <div className="flex flex-col gap-3 bg-beige rounded-xl p-4">
-            <p className="text-xs tracking-widest uppercase text-brown-light">Send your contribution to</p>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs tracking-widest uppercase text-brown-light">Step 1</p>
+              <p className="text-sm font-semibold text-brown">Send your contribution to</p>
+            </div>
             <div className="flex flex-col gap-2 text-sm text-brown">
               <div className="flex justify-between">
                 <span className="text-brown-light">Venmo</span>
@@ -356,10 +370,15 @@ export default function Registry() {
             </div>
           </div>
 
+          {/* Step 2: record it */}
           <div className="border-t border-beige pt-4 flex flex-col gap-3">
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs tracking-widest uppercase text-brown-light">Step 2</p>
+              <p className="text-sm font-semibold text-brown">Let us know how much you contributed</p>
+            </div>
             {needsIdentity ? (
               <>
-                <p className="text-xs text-brown-light">Let us know who you are and how much you contributed.</p>
+                <p className="text-xs text-brown-light">We&apos;ll record this under your name.</p>
                 <input
                   type="text"
                   placeholder="First name"
@@ -377,7 +396,7 @@ export default function Registry() {
                 {searchError && <p className="text-xs text-mauve">{searchError}</p>}
               </>
             ) : (
-              <p className="text-xs text-brown-light">Contributing as {guestDisplayName} — how much?</p>
+              <p className="text-xs text-brown-light">Recording under <span className="font-medium text-brown">{guestDisplayName}</span></p>
             )}
 
             <div className="relative">
@@ -472,7 +491,7 @@ export default function Registry() {
           Honestly, we already have most things. What we&apos;re still missing tends to be higher-quality
           replacements we haven&apos;t justified buying ourselves — pieces built to last a long time. Beyond
           that, we care far more about experiences and learning than stuff, which is why you&apos;ll find a
-          lot of funds here. Contributing to even one is genuinely meaningful to us.
+          lot of funds here. Contributing to one is genuinely meaningful to us.
         </p>
       </div>
 
@@ -484,38 +503,33 @@ export default function Registry() {
           {funds.length > 0 && (
             <section className="flex flex-col gap-4">
               <p className="text-xs tracking-[0.3em] uppercase text-brown-light font-sans">Funds</p>
-              <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {funds.map((fund) => {
                   const pct =
                     fund.price && fund.price > 0
                       ? Math.min(100, (fund.total_contributed / fund.price) * 100)
                       : null;
+                  const goalReached = fund.price !== null && fund.price > 0 && fund.total_contributed >= fund.price;
                   return (
-                    <div key={fund.id} className="bg-white rounded-2xl border border-beige overflow-hidden">
+                    <div key={fund.id} className="fund-card bg-white rounded-2xl border border-beige overflow-hidden flex flex-col">
                       {fund.image_url && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={fund.image_url} alt={fund.name} className="w-full h-48 object-cover" />
+                        <img src={fund.image_url} alt={fund.name} className="w-full aspect-[4/3] object-cover" />
                       )}
-                      <div className="p-5 flex flex-col gap-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex flex-col gap-0.5 min-w-0">
-                            <p className="font-serif text-brown text-base">{fund.name}</p>
-                            {fund.description && (
-                              <p className="text-xs text-brown-light leading-relaxed">{fund.description}</p>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => setModal({ mode: "contribute", item: fund })}
-                            className="shrink-0 border border-gold text-gold px-4 py-2 text-xs tracking-widest uppercase rounded-full whitespace-nowrap hover:bg-gold hover:text-white transition-colors"
-                          >
-                            Contribute →
-                          </button>
+                      <div className="p-4 flex flex-col gap-3 flex-1">
+                        <div className="flex flex-col gap-1 flex-1">
+                          <p className="font-serif text-brown text-sm leading-snug">{fund.name}</p>
+                          {fund.description && (
+                            <div className="max-h-[4.5rem] overflow-hidden">
+                              <p className="desc-scroll-inner text-xs text-brown-light leading-relaxed">{fund.description}</p>
+                            </div>
+                          )}
                         </div>
 
                         {(fund.price || fund.total_contributed > 0) && (
-                          <div className="flex flex-col gap-1.5">
+                          <div className="flex flex-col gap-1">
                             {pct !== null && (
-                              <div className="h-1.5 bg-beige rounded-full overflow-hidden">
+                              <div className="h-1 bg-beige rounded-full overflow-hidden">
                                 <div
                                   className="h-full bg-sage rounded-full transition-all"
                                   style={{ width: `${pct}%` }}
@@ -524,20 +538,33 @@ export default function Registry() {
                             )}
                             <div className="flex justify-between">
                               <p className="text-xs text-brown-light">
-                                ${fund.total_contributed.toLocaleString()} contributed
+                                ${fund.total_contributed.toLocaleString()}
                               </p>
                               {fund.price && (
                                 <p className="text-xs text-brown-light">
-                                  Goal: ${fund.price.toLocaleString()}
+                                  /${fund.price.toLocaleString()}
                                 </p>
                               )}
                             </div>
                             {fund.my_contribution > 0 && (
                               <p className="text-xs text-sage">
-                                You&apos;ve contributed ${fund.my_contribution.toLocaleString()} ♡
+                                You gave ${fund.my_contribution.toLocaleString()} ♡
                               </p>
                             )}
                           </div>
+                        )}
+
+                        {goalReached ? (
+                          <span className="text-center border border-beige-dark text-brown-light px-3 py-2 text-xs tracking-widest uppercase rounded-full opacity-60 cursor-default select-none">
+                            Goal reached ✓
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => setModal({ mode: "contribute", item: fund })}
+                            className="border border-gold text-gold px-3 py-2 text-xs tracking-widest uppercase rounded-full hover:bg-gold hover:text-white transition-colors"
+                          >
+                            Contribute →
+                          </button>
                         )}
                       </div>
                     </div>
@@ -548,73 +575,57 @@ export default function Registry() {
           )}
 
           {/* Items */}
-          {(unpurchasedItems.length > 0 || purchasedItems.length > 0) && (
+          {allItems.length > 0 && (
             <section className="flex flex-col gap-4">
               <p className="text-xs tracking-[0.3em] uppercase text-brown-light font-sans">Items</p>
-              <div className="flex flex-col gap-3">
-
-                {/* Unpurchased */}
-                {unpurchasedItems.map((item) => (
-                  <div key={item.id} className="bg-white rounded-2xl border border-beige overflow-hidden">
-                    {item.image_url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.image_url} alt={item.name} className="w-full h-48 object-cover" />
-                    )}
-                    <div className="p-5 flex flex-col gap-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex flex-col gap-0.5 min-w-0">
-                          <p className="font-serif text-brown text-base">{item.name}</p>
-                          {item.description && (
-                            <p className="text-xs text-brown-light leading-relaxed">{item.description}</p>
-                          )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {allItems.map((item) => {
+                  const qty = item.purchasers.length;
+                  const isSoldOut = item.max_quantity !== null && qty >= item.max_quantity;
+                  const hasLimit = item.max_quantity !== null;
+                  return (
+                    <div
+                      key={item.id}
+                      className={`bg-white rounded-2xl border border-beige overflow-hidden flex flex-col transition-opacity ${isSoldOut ? "opacity-60" : ""}`}
+                    >
+                      {item.image_url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.image_url} alt={item.name} className={`w-full aspect-square object-cover ${isSoldOut ? "grayscale" : ""}`} />
+                      )}
+                      <div className="p-3 flex flex-col gap-2 flex-1">
+                        <div className="flex-1 flex flex-col gap-0.5">
+                          <p className="font-serif text-brown text-sm leading-snug line-clamp-2">{item.name}</p>
                           {item.price && (
                             <p className="text-xs text-brown-light">${item.price.toLocaleString()}</p>
                           )}
+                          {hasLimit && (
+                            <p className="text-xs text-sage">
+                              {isSoldOut ? "Already purchased" : `${qty}/${item.max_quantity} purchased`}
+                            </p>
+                          )}
                         </div>
-                        {item.external_url && (
-                          <button
-                            onClick={() => handleItemLinkClick(item)}
-                            className="shrink-0 border border-beige-dark text-brown-light px-4 py-2 text-xs tracking-widest uppercase rounded-full whitespace-nowrap hover:border-sage hover:text-sage transition-colors"
-                          >
-                            View →
-                          </button>
-                        )}
+                        <div className="flex flex-col gap-1.5">
+                          {item.external_url && (
+                            <button
+                              onClick={() => handleItemLinkClick(item)}
+                              className="border border-beige-dark text-brown-light px-3 py-1.5 text-xs tracking-widest uppercase rounded-full w-full hover:border-sage hover:text-sage transition-colors"
+                            >
+                              View →
+                            </button>
+                          )}
+                          {!isSoldOut && (
+                            <button
+                              onClick={() => setModal({ mode: "mark-purchased", item })}
+                              className="text-xs text-brown-light underline underline-offset-2 hover:text-brown transition-colors text-center"
+                            >
+                              {qty > 0 ? "Mark as purchased too" : "Mark as purchased"}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <button
-                        onClick={() => setModal({ mode: "mark-purchased", item })}
-                        className="self-start text-xs text-brown-light underline underline-offset-2 hover:text-brown transition-colors"
-                      >
-                        Mark as purchased
-                      </button>
                     </div>
-                  </div>
-                ))}
-
-                {/* Purchased — greyed out at bottom */}
-                {purchasedItems.length > 0 && (
-                  <>
-                    {unpurchasedItems.length > 0 && (
-                      <p className="text-xs tracking-[0.3em] uppercase text-brown-light mt-2">Already taken</p>
-                    )}
-                    {purchasedItems.map((item) => (
-                      <div key={item.id} className="rounded-2xl border border-beige overflow-hidden opacity-50">
-                        {item.image_url && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={item.image_url} alt={item.name} className="w-full h-48 object-cover grayscale" />
-                        )}
-                        <div className="bg-beige p-5 flex items-center justify-between gap-4">
-                          <div className="flex flex-col gap-0.5 min-w-0">
-                            <p className="font-serif text-brown-light text-base line-through">{item.name}</p>
-                            {item.price && (
-                              <p className="text-xs text-brown-light">${item.price.toLocaleString()}</p>
-                            )}
-                          </div>
-                          <span className="shrink-0 text-xs text-sage font-semibold">Purchased ✓</span>
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
+                  );
+                })}
               </div>
             </section>
           )}
