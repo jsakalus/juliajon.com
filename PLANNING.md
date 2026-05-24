@@ -37,6 +37,11 @@
 | Plus-one guests | Placeholder "Guest" rows | Named when confirmed; party size drives the count |
 | Registry attribution | Session carry-over from RSVP | If they RSVPed in the same browser, skip name entry; otherwise prompt name search |
 | Fund progress visibility | Public | Everyone can see total contributed vs. goal |
+| RSVP "maybe" behavior | Hides + clears all other fields | When a guest selects "maybe" for the wedding, all follow-up questions hide and their existing responses for those fields are cleared |
+| Registry guest name | Required, never null | `guest_name` must be present in `registry_contributions` — validated client-side (name search blocks submission) and server-side (API returns 400 if missing) |
+| Shipping address privacy | Env var + identity gate | Address stored in `SHIPPING_ADDRESS` env var; returned from API route; only shown on page after guest identifies themselves |
+| Registry layout | Funds first, then items | Funds displayed above items; purchased items greyed out and moved to an "Already taken" section at the bottom |
+| Payment methods | Constants in page file | Venmo, PayPal, e-transfer details stored in `PAYMENT_METHODS` const at top of `app/registry/page.tsx` — edit there to update |
 
 ---
 
@@ -68,9 +73,8 @@
 - ✓ Deployed to Vercel (auto-deploys on push to main branch)
 - ✓ DNS configured: Squarespace A record → Vercel IP, CNAME www → Vercel
 - ✓ Vercel Deployment Protection: Standard Protection (custom domains are public)
-- **DNS still propagating**: `www.juliajon.com` may take a few more hours to resolve; `juliajon-com.vercel.app` is the public Vercel URL in the meantime
 
-### Phase 3 — Page Content ← UP NEXT
+### Phase 3 — Page Content ← IN PROGRESS
 
 #### Mobile Nav (global — must be done first)
 - [ ] Replace the current nav with a responsive version: full nav on desktop, hamburger menu on mobile
@@ -97,57 +101,95 @@
 #### FAQ (`/faq`)
 - [ ] Write answers to common questions (dress code, kids, gifts, etc.)
 
-#### Registry (`/registry`)
-- [ ] Create `registry_items` and `registry_contributions` tables in Supabase (see schema below)
-- [ ] Add all items and funds to `registry_items` via Supabase dashboard
-- [ ] Build registry page UI: cards for items (with purchased status), cards for funds (with progress bar)
-- [ ] Implement click tracking: save `item_id` + timestamp to localStorage when a link is clicked
-- [ ] Implement return popup: on page load, check localStorage → if a recent click exists, show "Did you purchase this?" / "How much did you contribute?" modal
-- [ ] Popup attribution: use stored RSVP session (guest_id in localStorage) if available; otherwise prompt name search
-- [ ] Add API routes: `POST /api/registry/contribute` to save to `registry_contributions`
-- [ ] Display live totals: items show "Purchased" badge once claimed; funds show progress bar (sum of contributions / goal)
+#### Registry (`/registry`) ← PARTIALLY COMPLETE
 
-#### RSVP (`/rsvp`)
+**What's built:**
+- ✓ `registry_items` and `registry_contributions` tables created in Supabase
+- ✓ Page layout: funds section first, then items, then "Already taken" (purchased) at bottom
+- ✓ Fund cards: name, description, "Contribute →" button (gold), progress bar (if goal set), total contributed, per-guest contribution ("You've contributed $X ♡") for identified guests. Unlimited funds (no goal) show total contributed as text only — no bar.
+- ✓ Item cards: name, description, price, "View →" button (opens external URL), "Mark as purchased" underline link. Images displayed at top of card if `image_url` is set.
+- ✓ Purchased items: greyed out, struck through, moved to "Already taken" section at bottom
+- ✓ "Contribute →" opens in-page modal showing payment methods (Venmo/PayPal/e-transfer) + name search (if not identified) + amount input
+- ✓ "Mark as purchased" opens in-page modal showing who the purchase will be attributed to + confirm/cancel
+- ✓ Click tracking: "View →" link saves `{ item_id, item_name, item_type, timestamp }` to `registry_pending_click` localStorage key, opens URL in new tab
+- ✓ Return popup: on page load, checks localStorage for click within 2 hours → "Did you purchase [name]?" or "How much did you contribute?" modal
+- ✓ Guest name is **required** for all contributions — identity step always runs if `guestDisplayName` is null; API validates and rejects if missing
+- ✓ API route `GET /api/registry/items?guestId=xxx` — returns items enriched with `total_contributed`, `purchased`, and `my_contribution` (per-guest, if guestId provided)
+- ✓ API route `POST /api/registry/contribute` — saves to `registry_contributions`; rejects if `guest_name` is missing
+- ✓ API route `GET /api/registry/shipping-address` — returns `SHIPPING_ADDRESS` env var
+- ✓ Shipping address section at bottom: shows "View address →" button until guest is identified, then reveals address
+- ✓ Page re-fetches items after any contribution to update UI live
+
+**Still needed:**
+- [ ] Run the SQL below to populate `registry_items` table
+- [ ] Add `external_url` for items/funds that are missing links (see list below)
+- [ ] Add `SHIPPING_ADDRESS` env var to `.env.local` AND Vercel dashboard
+- ✓ Skydiving Fund goal set to $3,000
+
+**SQL to populate registry_items** (run in Supabase SQL editor):
+```sql
+insert into registry_items (name, type, price, external_url, display_order) values
+  ('East Fork Dinner Set',            'item', null,  null,                                                                   1),
+  ('Honeymoon Fund',                  'fund', null,  null,                                                                   2),
+  ('Boleslawiec Dinnerware',          'item', null,  null,                                                                   3),
+  ('Handmade Blown Glass Glasses',    'item', null,  null,                                                                   4),
+  ('House Fund',                      'fund', null,  null,                                                                   5),
+  ('Skydiving Fund',                  'fund', null,  null,                                                                   6),
+  ('Pottery Classes Fund',            'fund', 1000,  null,                                                                   7),
+  ('Peanut''s Dog Feeder',            'item', null,  'https://www.houndsy.com/products/houndsy-kibble-dispenser',           8),
+  ('Bed Frame',                       'item', null,  'https://www.nectarsleep.com/bed-frames/japanese-joinery-bamboo-bed',  9),
+  ('Bike Fund',                       'fund', 3000,  null,                                                                   10),
+  ('Sunrise Alarm Clock',             'item', null,  'https://risecentered.com/products/the-original-sunrise-alarm-clock',  11),
+  ('Nebulizing Diffuser',             'item', null,  'https://moodandmoss.com/products/nebulizing-wood-glass-diffuser',     12);
+```
+
+**SQL to add descriptions** (run after inserting items):
+```sql
+update registry_items set description = 'We''re planning a 3-month trip through Asia — Singapore to Mongolia to the Stans, with a lot in between. If you want to support our gastro adventures, flights, a spa day, horseback riding, scuba diving, and probably a few doctor visits for upset stomachs — we would love it.' where name = 'Honeymoon Fund';
+update registry_items set description = 'We don''t know where we want to settle down yet, but we''ve been saving for a house. The longer we save, the better house we''ll get to buy.' where name = 'House Fund';
+update registry_items set description = 'We decided we''re gonna send it. Julia is terrified. Jonathan is stoked.' where name = 'Skydiving Fund';
+update registry_items set description = 'We''ve been trying to get off our phones and into activities that quiet the mind. Jonathan fell in love with pottery after a lesson from Julia''s aunt in Poland. You''ll also notice some handmade ceramics in our items list — we love handmade things and natural materials.' where name = 'Pottery Classes Fund';
+update registry_items set description = 'Jonathan resolved to learn how to ride a bike properly, and Julia decided she could use an upgrade from the one she bought in 2016. If Julia''s knees cooperate, we''re training for triathlons.' where name = 'Bike Fund';
+update registry_items set description = 'Julia loves everything from East Fork. She already owns three of The Mug and could always use more. Big bowls especially.' where name = 'East Fork Dinner Set';
+update registry_items set description = 'The peacock ones.' where name = 'Boleslawiec Dinnerware';
+```
+
+**Items still needing external URLs** (add in Supabase table editor):
+- East Fork Dinner Set
+- Boleslawiec Dinnerware
+- Handmade Blown Glass Glasses
+- Honeymoon Fund (Venmo / e-transfer link)
+- House Fund (Venmo / e-transfer link)
+- Skydiving Fund (Venmo / e-transfer link + confirm goal amount)
+- Bike Fund (Venmo / e-transfer link)
+
+#### RSVP (`/rsvp`) ← MOSTLY COMPLETE
 - ✓ Name search → party lookup → per-guest form → submit
 - ✓ API routes: `POST /api/rsvp/search`, `POST /api/rsvp/submit`
+- ✓ "No" is final — existing "no" response shows a polite locked message, no re-edit allowed
+- ✓ "Maybe" option — third button alongside Yes/No; shows "Anything you'd like us to know?" textarea only; all other fields hide AND are cleared when maybe is selected
+- ✓ Contact fields (email + cell) — pre-filled from `guests` table; submit patches `guests.email` and `guests.phone` if changed
+- ✓ Travel mode question — "Have you booked your flights?" → `travel_mode`: `'flying_booked'` / `'flying_not_booked'` / `'driving'`
+- ✓ "Party hard?" question — saves to `staying_late` boolean
+- ✓ Flower garden visualization of responded/maybe counts shown after submit
+- ✓ On successful submit, saves `rsvp_guest_id` AND `rsvp_guest_name` to localStorage (used by registry page for attribution)
 - [ ] Test RSVP end-to-end on live site
 - [ ] Add last names for single-name guests (needed for name search to work)
 - [ ] Finalize welcome dinner invite list (`invited_to_welcome_dinner` in Supabase)
 
-##### RSVP Page Redesign — Planned Changes
+##### RSVP Data Flow
+All form fields live in React state (`responses: Record<guestId, RsvpEntry>`) until Submit is clicked. On submit, POSTed to `/api/rsvp/submit` → upserted to `rsvp_responses` (one row per guest). If tab is closed before submit, nothing is saved.
 
-**Database changes (run in Supabase SQL editor before deploying):**
-```sql
--- Replace boolean wedding_attending with text status ('yes', 'no', 'maybe')
-alter table rsvp_responses
-  add column wedding_attending_status text check (wedding_attending_status in ('yes', 'no', 'maybe')),
-  add column welcome_dinner_status    text check (welcome_dinner_status    in ('yes', 'no', 'maybe')),
-  add column maybe_reason             text,
-  add column flights_purchased        boolean,
-  add column staying_late             boolean;
--- Note: keep the old wedding_attending / welcome_dinner_attending boolean columns for now
--- (set them in parallel during submit so nothing breaks if you roll back)
-```
-
-**Logic changes:**
-1. **"No" is final** — on search, if an existing response has `wedding_attending_status = 'no'`, skip the form entirely and show a polite but direct message: "You've already declined — your response has been recorded. If that's changed, please get in touch with us directly." No edit allowed.
-2. **"Maybe" option** — add a third button alongside Yes / No. If selected, show an optional free-text field: "Anything you'd like us to know?" Submit saves `wedding_attending_status = 'maybe'` and `maybe_reason`. Welcome dinner also gets a Maybe option.
-3. **Contact fields (cell + email)** — search route fetches `email` and `phone` from the `guests` table and returns them. RSVP form shows them pre-filled if present, with an "Update" label. Submit route patches the `guests` row if values changed.
-4. **Flights purchased?** — yes/no toggle per guest: "Have you booked your flights yet?" Saves to `flights_purchased` boolean.
-5. **"Party hard?" question** — playful question per guest. Label: "Are you ready to party hard? 🎉 We're figuring out how late to keep the bar open (max 1am) — there's hot tub, karaoke, and we're not getting kicked out of the inn." Yes/No buttons. Saves to `staying_late` boolean.
-
-**UI / copy changes:**
-6. **Remove party name display** — don't show `{result.party.name}` to guests (it's your internal label).
-7. **Remove "You're invited"** — delete the small `<p>You're invited</p>` eyebrow above the RSVP heading.
-8. **"Found your invitation" — bigger and more fun** — currently tiny uppercase tracking text. Make it a large serif line with a 🎉 emoji, celebratory tone.
-9. **Welcome dinner buttons** — Yes = green (sage), Maybe = yellow (gold), No = mauve. Currently Yes=gold; swap to sage for Yes and gold for Maybe.
-10. **Add date to wedding attendance question** — label reads: "Attending the wedding? *(Saturday, May 29, 2027)*"
-11. **Input field backgrounds** — change `bg-beige` on inputs/textareas to `bg-white` so they don't look disabled.
-12. **Rounded corners everywhere** — cards: `rounded-2xl`, buttons: `rounded-full`, inputs: `rounded-lg`. Lean into whimsical / organic feel.
-
-**API route changes:**
-- `search` route: also select `email, phone` from `guests`; return on each member object
-- `submit` route: accept and save `wedding_attending_status`, `welcome_dinner_status`, `maybe_reason`, `flights_purchased`, `staying_late`; also upsert `email`/`phone` back to `guests` table if changed
+| Form field | Table | Column |
+|---|---|---|
+| Attending the wedding? | `rsvp_responses` | `wedding_attending_status` ('yes'/'no'/'maybe') |
+| Attending welcome dinner? | `rsvp_responses` | `welcome_dinner_status` ('yes'/'no'/'maybe') |
+| Flights booked? | `rsvp_responses` | `travel_mode` ('flying_booked'/'flying_not_booked'/'driving') |
+| Ready to party? | `rsvp_responses` | `staying_late` (boolean) |
+| Dietary notes | `rsvp_responses` | `dietary_notes` (text) |
+| Anything you'd like us to know? | `rsvp_responses` | `maybe_reason` (text) |
+| Email | `guests` | `email` |
+| Cell | `guests` | `phone` |
 
 ---
 
@@ -159,6 +201,16 @@ Next.js (App Router)     ← the website framework
   └── Tailwind CSS       ← styling
 Vercel                   ← hosting (connected to this GitHub repo)
 ```
+
+---
+
+## Environment Variables
+
+| Variable | Where | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | `.env.local` + Vercel | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | `.env.local` + Vercel | Supabase service role key (never expose client-side) |
+| `SHIPPING_ADDRESS` | `.env.local` + Vercel | Julia & Jon's mailing address — not in source code |
 
 ---
 
@@ -199,9 +251,9 @@ One row per item or fund shown on the registry page.
 | name | text | e.g. "KitchenAid Mixer", "Honeymoon Fund" |
 | type | text | `'item'` or `'fund'` — enforced by check constraint |
 | description | text | optional tagline shown on the card |
-| price | numeric | for items: full price; for funds: goal amount (optional) |
+| price | numeric | for items: full price; for funds: goal amount (null = unlimited) |
 | external_url | text | link to purchase site, Venmo, or e-transfer |
-| image_url | text | optional product photo |
+| image_url | text | optional product photo URL |
 | display_order | int | controls sort order on the page |
 | is_active | boolean | default true; set false to hide without deleting |
 | created_at | timestamp | auto-set |
@@ -213,8 +265,8 @@ One row per guest action (item purchased or fund contribution).
 |---|---|---|
 | id | uuid | primary key |
 | registry_item_id | uuid | FK → registry_items.id |
-| guest_id | uuid | FK → guests.id — nullable (fallback to guest_name) |
-| guest_name | text | fallback if guest_id not available |
+| guest_id | uuid | FK → guests.id — nullable if guest not in DB |
+| guest_name | text | **always required** — API rejects if missing; used as primary display name |
 | contribution_type | text | `'purchased'` or `'contributed'` |
 | amount | numeric | null for items; dollar amount for funds |
 | created_at | timestamp | auto-set |
@@ -226,10 +278,25 @@ One row per guest, created when they submit their RSVP.
 |---|---|---|
 | id | uuid | primary key |
 | guest_id | uuid | FK → guests.id |
-| wedding_attending | boolean | yes/no for wedding |
-| welcome_dinner_attending | boolean | null if not invited |
+| wedding_attending | boolean | legacy boolean — still set in parallel with status field |
+| welcome_dinner_attending | boolean | legacy boolean — still set in parallel with status field |
+| wedding_attending_status | text | 'yes' / 'no' / 'maybe' |
+| welcome_dinner_status | text | 'yes' / 'no' / 'maybe' |
+| maybe_reason | text | free text; only collected when wedding_attending_status = 'maybe' |
+| travel_mode | text | 'flying_booked' / 'flying_not_booked' / 'driving' |
+| staying_late | boolean | whether guest plans to stay for the late-night party |
 | dietary_notes | text | free text: allergies, vegan, GF, etc. |
 | submitted_at | timestamp | when they submitted |
+
+---
+
+## localStorage Keys
+
+| Key | Set by | Used by | Value |
+|---|---|---|---|
+| `rsvp_guest_id` | RSVP page (on submit) | Registry page (contribution attribution) | guest UUID |
+| `rsvp_guest_name` | RSVP page (on submit); Registry page (after name search) | Registry page (display + required for contributions) | guest's full name |
+| `registry_pending_click` | Registry page (on "View →" click) | Registry page (on next load, triggers return popup) | `{ item_id, item_name, item_type, timestamp }` |
 
 ---
 
@@ -240,24 +307,38 @@ One row per guest, created when they submit their RSVP.
 3. System searches `guests` table → finds their record → loads their party
 4. Shows all party members — guest fills out attending + dietary notes for each
 5. If party has `invited_to_welcome_dinner = true`, that section appears
-6. Submit → saves one row per guest to `rsvp_responses`
+6. Submit → saves one row per guest to `rsvp_responses`; saves `rsvp_guest_id` and `rsvp_guest_name` to localStorage
 
 ---
 
 ## Registry Flow
 
-1. Guest visits `/registry` — sees item cards and fund cards
-2. Clicks a link → we save `{ item_id, timestamp }` to localStorage, then open the external URL in a new tab
-3. Guest returns to the registry page
-4. On load, the page checks localStorage for any click within the last 2 hours
-5. If found, a popup appears:
-   - **Item**: "Did you purchase [name]?" → Yes / No
-   - **Fund**: "How much did you contribute to [name]?" → dollar input + confirm
-6. Attribution:
-   - If `guest_id` is stored in localStorage from a prior RSVP session → use it silently
-   - Otherwise → prompt name search (same as RSVP) to identify the guest
-7. On confirm → `POST /api/registry/contribute` → saves row to `registry_contributions`, clears localStorage entry
-8. Page updates live: item shows "Purchased" badge; fund progress bar increments
+**Explicit contribution/purchase:**
+1. Guest clicks "Contribute →" on a fund card → modal opens showing payment info (Venmo/PayPal/e-transfer)
+2. If not identified: name search runs first; once identified, amount input appears
+3. Guest enters amount → confirm → `POST /api/registry/contribute` → UI updates
+
+**Explicit mark as purchased:**
+1. Guest clicks "Mark as purchased" underline link on an item card → modal opens
+2. If not identified: name search runs first
+3. Modal shows "Marking as purchased by [Name]" → confirm → `POST /api/registry/contribute` → item moves to "Already taken"
+
+**Return-visit popup (after clicking "View →"):**
+1. "View →" click saves `{ item_id, item_name, item_type, timestamp }` to localStorage, opens URL in new tab
+2. Guest returns to registry page within 2 hours → popup appears automatically
+3. Item popup: "Did you purchase [name]?" → Yes / Just browsing
+4. Fund popup: "How much did you contribute?" → dollar input + confirm
+5. On confirm → `POST /api/registry/contribute` → UI updates
+
+**Attribution (all flows):**
+- If `rsvp_guest_name` is in localStorage → identity already known, skip name search
+- Otherwise → name search modal (same first/last name lookup as RSVP)
+- `guest_name` is required for all contributions — blocked client-side and validated server-side
+
+**Shipping address:**
+- "Shipping a gift?" section at bottom of page
+- Not identified: shows "View address →" button → triggers name search modal → reveals address after identification
+- Already identified: address shown immediately on page load
 
 ---
 
@@ -265,6 +346,7 @@ One row per guest, created when they submit their RSVP.
 
 - **Public pages**: Landing page, FAQ, Registry, Where to Stay, Schedule, Travel
 - **Private (name search required)**: RSVP page only
+- **Soft identity gate**: Registry shipping address and per-guest contribution totals only shown after name identification
 - **Admin access**: Julia logs into supabase.com directly to manage guest data
 
 ---
@@ -309,3 +391,5 @@ alter table guests alter column last_name drop not null;
 - [ ] Last names needed for all single-name guests (for RSVP name search)
 - [ ] Finalize welcome dinner invite list
 - [ ] Any inspiration sites or mood board for design?
+- [ ] External URLs / contribution links for fund items (Honeymoon, House, Skydiving, Bike funds)
+- [ ] Goal amount for Skydiving Fund (currently null)
