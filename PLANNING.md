@@ -84,7 +84,38 @@
 - [ ] Add photos and fun elements (engagement photos, venue, etc.)
 
 #### Gamification ← IN PROGRESS
-- [ ] TBD — details to be defined
+
+**Philosophy**: Playful Peanut (the dog) reactions scattered throughout the site — no libraries, all Web Audio API (synthesized sounds, no files) and CSS keyframe animations.
+
+**Home page (`app/page.tsx`, `app/components/PeanutRain.tsx`)**
+- ✓ On first visit, 35 Peanut face images rain from the top of the screen — varying sizes, speeds, and gentle diagonal drift. Plays once per browser session (guarded by `sessionStorage`).
+
+**RSVP page (`app/rsvp/page.tsx`, `app/globals.css`)**
+
+Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API — no audio files.
+
+| Button | Trigger | Animation | Sound |
+|---|---|---|---|
+| Yes, I'll be there | Click | `peanut-nav.png` grows from tiny → large as it runs diagonally top-left → bottom-right over 2s | None |
+| Maybe | Click | `Maybe.png` boings out from center of screen (springy scale keyframe) | Deep wompey boing — triangle wave 310Hz → 68Hz with 150ms delay |
+| Regretfully, no | Hover | `Regretfully no.png` appears small to the right of the button | None |
+| Yes (welcome dinner) | Click | `Yes dinner.png` slides in from right, holds, slides back — pinned to bottom of screen | None |
+| Obviously 🎉 (party) | Click | `Party.png` slides in from left, holds, slides back — pinned to mid-left | Beatbox: kick + snare + hi-hat pattern at 130 BPM |
+| I'll slip out early | Hover | `Slip out early.png` appears to the right of the button | Continuous snore — looped noise through 160Hz low-pass + 0.6Hz LFO breathing rhythm; stops on mouse leave |
+| Yep, booked! (flights) | Click | ✈️ emoji flies bottom-left → top-right diagonally | Rising bandpass whoosh — noise sweep 600Hz → 3500Hz |
+| I'm driving | Hover | 🚐 emoji drives right → left across the bottom of the screen | None |
+
+**CSS keyframes added to `app/globals.css`:**
+- `yes-run` — diagonal translate + scale grow
+- `maybe-boing` — springy scale-in, hold, fade out
+- `yes-dinner-slide` — translateX in/hold/out from right
+- `party-slide` — translateX in/hold/out from left
+- `airplane-fly` — diagonal translate bottom-left to top-right
+- `van-drive` — translateX right to left
+
+**Still to do / ideas:**
+- [ ] More Peanut reactions on other pages (FAQ, Registry, etc.)
+- [ ] `public/peanut/FAQ.png` and `public/peanut/Please.png` assets exist but are unused
 
 #### Our Story (`/our-story`) ← NOT STARTED
 - [ ] Create page with Julia & Jonathan's story
