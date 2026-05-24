@@ -38,31 +38,39 @@ export default function NavBar() {
           ))}
           <Link
             href="/rsvp"
-            className="bg-white text-sage px-5 py-1.5 font-semibold tracking-wide hover:bg-beige transition-colors rounded-sm"
+            className="bg-white text-sage px-7 py-2.5 font-semibold tracking-wide hover:bg-beige transition-colors rounded-sm"
           >
             RSVP
           </Link>
         </div>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden text-white p-1"
-          aria-label={open ? "Close menu" : "Open menu"}
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          ) : (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          )}
-        </button>
+        {/* Mobile: RSVP button always visible + hamburger */}
+        <div className="md:hidden flex items-center gap-3">
+          <Link
+            href="/rsvp"
+            className="bg-white text-sage px-6 py-2.5 text-sm font-semibold tracking-wide hover:bg-beige transition-colors rounded-sm"
+          >
+            RSVP
+          </Link>
+          <button
+            className="text-white p-1"
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Paintbrush stroke bottom edge — beige wave overlays the sage padding */}
@@ -93,13 +101,6 @@ export default function NavBar() {
               {l.label}
             </Link>
           ))}
-          <Link
-            href="/rsvp"
-            className="mt-1 text-center bg-white text-sage px-5 py-2 font-semibold tracking-wide hover:bg-beige transition-colors rounded-sm"
-            onClick={() => setOpen(false)}
-          >
-            RSVP
-          </Link>
         </div>
       )}
     </nav>

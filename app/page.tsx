@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import Countdown from "./components/Countdown";
 
@@ -12,42 +13,61 @@ const pages = [
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center">
+    <div className="relative overflow-x-hidden">
 
-      {/* Hero */}
-      <div className="w-full flex flex-col items-center justify-center py-28 px-6 text-center gap-5">
-        <h1 className="font-serif italic text-7xl text-brown font-light">Julia & Jonathan</h1>
-        <div className="flex items-center gap-5 text-brown-light">
-          <div className="h-px w-16 bg-sage-light"></div>
-          <p className="font-sans text-sm tracking-[0.25em] uppercase">May 29, 2027</p>
-          <div className="h-px w-16 bg-sage-light"></div>
-        </div>
-        <p className="font-sans text-brown-light text-base">
-          Riverside Park & The Bear and Bison Inn · Canmore, Alberta
-        </p>
-        <div className="mt-6">
-          <Countdown />
-        </div>
+      {/* Flower borders */}
+      <div className="fixed left-0 top-0 h-screen hidden xl:block pointer-events-none select-none z-0">
+        <Image
+          src="/watercolor-flowers-border-left.png"
+          alt=""
+          width={220}
+          height={900}
+          className="h-full w-auto object-cover"
+        />
+      </div>
+      <div className="fixed right-0 top-0 h-screen hidden xl:block pointer-events-none select-none z-0">
+        <Image
+          src="/watercolor-flowers-border-right.png"
+          alt=""
+          width={220}
+          height={900}
+          className="h-full w-auto object-cover"
+        />
+      </div>
+
+      {/* Hero — fills viewport */}
+      <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center py-8 px-6 text-center gap-3 relative z-10">
+        <h1 className="font-serif text-6xl md:text-7xl text-brown font-semibold">Julia &amp; Jonathan</h1>
+        <p className="font-sans text-sm tracking-[0.25em] uppercase text-brown-light">May 29, 2027</p>
+        <Image
+          src="/Julia and Jonathan kiss.png"
+          alt="Julia and Jonathan"
+          width={862}
+          height={651}
+          style={{ width: "min(85vw, 600px)", height: "auto" }}
+          priority
+        />
+        <Countdown inline />
       </div>
 
       {/* Welcome */}
-      <div className="max-w-prose mx-auto px-6 pb-12 text-center">
+      <div className="max-w-prose mx-auto px-6 pb-12 text-center relative z-10">
         <p className="font-sans text-base text-brown leading-relaxed">
-          We can't wait to celebrate with you in the mountains. Use this site to RSVP,
+          We can&apos;t wait to celebrate with you in the mountains. Use this site to RSVP,
           get travel info, find a place to stay, and explore everything we have planned
           for the weekend.
         </p>
       </div>
 
       {/* Divider */}
-      <div className="flex items-center gap-4 mb-12 text-sage">
+      <div className="flex items-center gap-4 mb-12 text-sage relative z-10">
         <div className="h-px w-24 bg-sage-light"></div>
         <span className="text-lg">✦</span>
         <div className="h-px w-24 bg-sage-light"></div>
       </div>
 
       {/* Navigation cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-2xl px-6 pb-20">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-2xl px-6 pb-20 mx-auto relative z-10">
         {pages.map((page) => (
           <Link
             key={page.href}
