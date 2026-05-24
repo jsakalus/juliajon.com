@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Julia & Jonathan | May 29, 2027",
     description: "Julia & Jonathan's wedding — May 29, 2027 in Canmore, Alberta",
-    images: [{ url: "/illustrations/julia-and-jonathan-kiss.png" }],
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
   },
 };
 
