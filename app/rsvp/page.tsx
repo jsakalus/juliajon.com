@@ -346,25 +346,6 @@ export default function RSVP() {
       {showPeanut && <PeanutCelebration onDismiss={() => setShowPeanut(false)} />}
 
       <div className="relative overflow-x-hidden">
-        {/* Flower border images */}
-        <div className="fixed left-0 top-0 h-screen hidden xl:block pointer-events-none select-none z-0">
-          <Image
-            src="/watercolor-flowers-border-left.png"
-            alt=""
-            width={220}
-            height={900}
-            className="h-full w-auto object-cover"
-          />
-        </div>
-        <div className="fixed right-0 top-0 h-screen hidden xl:block pointer-events-none select-none z-0">
-          <Image
-            src="/watercolor-flowers-border-right.png"
-            alt=""
-            width={220}
-            height={900}
-            className="h-full w-auto object-cover"
-          />
-        </div>
 
         <div className="max-w-2xl mx-auto px-6">
 

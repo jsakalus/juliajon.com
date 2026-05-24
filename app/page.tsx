@@ -3,40 +3,21 @@ import Link from "next/link";
 import Countdown from "./components/Countdown";
 
 const pages = [
-  { href: "/rsvp",          label: "RSVP",          sub: "Let us know you're coming",      accent: "border-t-mauve" },
-  { href: "/schedule",      label: "Schedule",       sub: "Weekend itinerary",              accent: "border-t-gold" },
-  { href: "/travel",        label: "Travel",         sub: "Getting to Canmore",             accent: "border-t-sage" },
-  { href: "/where-to-stay", label: "Where to Stay",  sub: "Accommodation recommendations",  accent: "border-t-lavender" },
-  { href: "/faq",           label: "FAQ",            sub: "Common questions answered",      accent: "border-t-terracotta" },
-  { href: "/registry",      label: "Registry",       sub: "Our wish list",                  accent: "border-t-gold" },
+  { href: "/schedule",      label: "Schedule",      sub: "Weekend Itinerary",              btn: "SEE SCHEDULE",   img: "/Property 1=Schedule.png",      btnClass: "bg-sage" },
+  { href: "/travel",        label: "Travel",        sub: "Getting to Canmore",             btn: "TRAVEL INFO",    img: "/Property 1=Travel.png",         btnClass: "bg-sage" },
+  { href: "/where-to-stay", label: "Where to Stay", sub: "Accommodation Recommendations",  btn: "FIND A PLACE",   img: "/Property 1=Where to Stay.png",  btnClass: "bg-sage" },
+  { href: "/faq",           label: "FAQs",          sub: "Common questions answered",      btn: "GET ANSWERS",    img: "/Property 1=FAQs.png",           btnClass: "bg-sage" },
+  { href: "/registry",      label: "Registry",      sub: "Our wish list",                  btn: "VIEW REGISTRY",  img: "/Property 1=Registry.png",       btnClass: "bg-sage" },
+  { href: "/rsvp",          label: "RSVP",          sub: "Let us know if you're coming",   btn: "RSVP NOW",       img: "/Property 1=RSVP.png",           btnClass: "bg-mauve" },
 ];
 
 export default function Home() {
   return (
     <div className="relative overflow-x-hidden">
 
-      {/* Flower borders */}
-      <div className="fixed left-0 top-0 h-screen hidden xl:block pointer-events-none select-none z-0">
-        <Image
-          src="/watercolor-flowers-border-left.png"
-          alt=""
-          width={220}
-          height={900}
-          className="h-full w-auto object-cover"
-        />
-      </div>
-      <div className="fixed right-0 top-0 h-screen hidden xl:block pointer-events-none select-none z-0">
-        <Image
-          src="/watercolor-flowers-border-right.png"
-          alt=""
-          width={220}
-          height={900}
-          className="h-full w-auto object-cover"
-        />
-      </div>
-
       {/* Hero — fills viewport */}
       <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center py-8 px-6 text-center gap-3 relative z-10">
+
         <h1 className="font-serif text-6xl md:text-7xl text-brown font-semibold">Julia &amp; Jonathan</h1>
         <p className="font-sans text-sm tracking-[0.25em] uppercase text-brown-light">May 29, 2027</p>
         <Image
@@ -50,32 +31,38 @@ export default function Home() {
         <Countdown inline />
       </div>
 
-      {/* Welcome */}
-      <div className="max-w-prose mx-auto px-6 pb-12 text-center relative z-10">
-        <p className="font-sans text-base text-brown leading-relaxed">
-          We can&apos;t wait to celebrate with you in the mountains. Use this site to RSVP,
-          get travel info, find a place to stay, and explore everything we have planned
-          for the weekend.
-        </p>
-      </div>
-
       {/* Divider */}
-      <div className="flex items-center gap-4 mb-12 text-sage relative z-10">
+      <div className="flex items-center justify-center gap-4 mb-12 text-sage relative z-10">
         <div className="h-px w-24 bg-sage-light"></div>
         <span className="text-lg">✦</span>
         <div className="h-px w-24 bg-sage-light"></div>
       </div>
 
+      {/* Everything you need */}
+      <div className="text-center mb-12 relative z-10">
+        <h2 className="font-handwritten text-5xl text-sage">everything you need</h2>
+      </div>
+
       {/* Navigation cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-2xl px-6 pb-20 mx-auto relative z-10">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-10 w-full max-w-4xl px-8 pb-20 mx-auto relative z-10">
         {pages.map((page) => (
           <Link
             key={page.href}
             href={page.href}
-            className={`bg-white border-t-4 ${page.accent} p-5 hover:shadow-md transition-shadow`}
+            className="flex flex-col items-center text-center gap-3 group h-full"
           >
-            <p className="font-serif text-lg text-brown mb-1">{page.label}</p>
-            <p className="font-sans text-sm text-brown-light">{page.sub}</p>
+            <Image
+              src={page.img}
+              alt={page.label}
+              width={200}
+              height={200}
+              className="w-48 h-48 object-contain"
+            />
+            <p className="font-serif text-xl text-brown">{page.label}</p>
+            <p className="font-sans text-sm text-brown-light flex-1">{page.sub}</p>
+            <span className={`mt-auto px-5 py-2 rounded-full ${page.btnClass} text-white text-xs font-sans tracking-widest uppercase whitespace-nowrap group-hover:scale-105 transition-transform duration-200`}>
+              {page.btn}
+            </span>
           </Link>
         ))}
       </div>

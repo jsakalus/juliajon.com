@@ -16,7 +16,7 @@ export default function NavBar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="bg-sage relative pb-10">
+    <nav className="bg-sage relative pb-10 sticky top-0 z-50">
       {/* Top bar */}
       <div className="px-6 py-3 flex items-center justify-between">
         <Link href="/" aria-label="Home" onClick={() => setOpen(false)}>
