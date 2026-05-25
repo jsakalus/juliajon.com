@@ -351,88 +351,101 @@ export default function Registry() {
 
     if (modal.mode === "contribute") {
       modalContent = (
-        <>
-          <div className="flex flex-col gap-1">
-            <p className="font-serif italic text-xl text-brown">{modal.item.name}</p>
-            {modal.item.description && (
-              <p className="text-sm text-brown-light">{modal.item.description}</p>
-            )}
-          </div>
-
-          {/* Step 1: send money */}
-          <div className="flex flex-col gap-3 bg-beige rounded-xl p-4">
-            <div className="flex flex-col gap-0.5">
-              <p className="text-xs tracking-widest uppercase text-brown-light">Step 1</p>
-              <p className="text-sm font-semibold text-brown">Send your contribution to</p>
-            </div>
-            <div className="flex flex-col gap-2 text-sm text-brown">
-              <div className="flex justify-between">
-                <span className="text-brown-light">Venmo</span>
-                <span className="font-medium">{PAYMENT_METHODS.juliaVenmo}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-brown-light">PayPal</span>
-                <span className="font-medium">{PAYMENT_METHODS.juliaPaypal}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-brown-light">e-Transfer</span>
-                <span className="font-medium">{PAYMENT_METHODS.jonathanEtransfer}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 2: record it */}
-          <div className="border-t border-beige pt-4 flex flex-col gap-3">
-            <div className="flex flex-col gap-0.5">
-              <p className="text-xs tracking-widest uppercase text-brown-light">Step 2</p>
-              <p className="text-sm font-semibold text-brown">Let us know how much you contributed</p>
-            </div>
-            {needsIdentity ? (
-              <>
-                <p className="text-xs text-brown-light">We&apos;ll record this under your name.</p>
-                <input
-                  type="text"
-                  placeholder="First name"
-                  value={searchFirst}
-                  onChange={(e) => setSearchFirst(e.target.value)}
-                  className="border border-beige-dark bg-white px-3 py-2.5 text-sm rounded-lg focus:outline-none focus:border-sage"
-                />
-                <input
-                  type="text"
-                  placeholder="Last name"
-                  value={searchLast}
-                  onChange={(e) => setSearchLast(e.target.value)}
-                  className="border border-beige-dark bg-white px-3 py-2.5 text-sm rounded-lg focus:outline-none focus:border-sage"
-                />
-                {searchError && <p className="text-xs text-mauve">{searchError}</p>}
-              </>
-            ) : (
-              <p className="text-xs text-brown-light">Recording under <span className="font-medium text-brown">{guestDisplayName}</span></p>
-            )}
-
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-brown-light">$</span>
-              <input
-                type="number"
-                placeholder="0"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="border border-beige-dark bg-white pl-7 pr-3 py-2.5 text-sm rounded-lg w-full focus:outline-none focus:border-sage"
+        <div className="flex flex-col sm:flex-row">
+          {/* Photo — full width on mobile, left column on desktop */}
+          {modal.item.image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <div className="sm:w-52 sm:shrink-0">
+              <img
+                src={modal.item.image_url}
+                alt={modal.item.name}
+                className="w-full h-52 sm:h-full object-cover"
               />
             </div>
-            <button
-              onClick={() => handleContributeAndSave(modal.item.id)}
-              disabled={submitting || searching || !amount || (needsIdentity && !searchFirst)}
-              className="bg-sage text-white px-4 py-2.5 text-xs tracking-widest uppercase rounded-full disabled:opacity-50"
-            >
-              {submitting || searching ? "Saving…" : "Confirm"}
-            </button>
+          )}
 
-            <button onClick={closeModal} className="text-xs text-brown-light text-center underline underline-offset-2">
-              Close
-            </button>
+          {/* Content */}
+          <div className="flex flex-col gap-4 p-6 flex-1">
+            <div className="flex flex-col gap-1">
+              <p className="font-serif italic text-xl text-brown">{modal.item.name}</p>
+              {modal.item.description && (
+                <p className="text-sm text-brown-light">{modal.item.description}</p>
+              )}
+            </div>
+
+            {/* Step 1 */}
+            <div className="flex flex-col gap-3 bg-beige rounded-xl p-4">
+              <div className="flex flex-col gap-0.5">
+                <p className="text-xs tracking-widest uppercase text-brown-light">Step 1</p>
+                <p className="text-sm font-semibold text-brown">Send your contribution to</p>
+              </div>
+              <div className="flex flex-col gap-2 text-sm text-brown">
+                <div className="flex justify-between">
+                  <span className="text-brown-light">Venmo</span>
+                  <span className="font-medium">{PAYMENT_METHODS.juliaVenmo}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-brown-light">PayPal</span>
+                  <span className="font-medium">{PAYMENT_METHODS.juliaPaypal}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-brown-light">e-Transfer</span>
+                  <span className="font-medium">{PAYMENT_METHODS.jonathanEtransfer}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="border-t border-beige pt-4 flex flex-col gap-3">
+              <div className="flex flex-col gap-0.5">
+                <p className="text-xs tracking-widest uppercase text-brown-light">Step 2</p>
+                <p className="text-sm font-semibold text-brown">Let us know how much you contributed</p>
+              </div>
+              {needsIdentity ? (
+                <>
+                  <p className="text-xs text-brown-light">We&apos;ll record this under your name.</p>
+                  <input
+                    type="text"
+                    placeholder="First name"
+                    value={searchFirst}
+                    onChange={(e) => setSearchFirst(e.target.value)}
+                    className="border border-beige-dark bg-white px-3 py-2.5 text-sm rounded-lg focus:outline-none focus:border-sage"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Last name"
+                    value={searchLast}
+                    onChange={(e) => setSearchLast(e.target.value)}
+                    className="border border-beige-dark bg-white px-3 py-2.5 text-sm rounded-lg focus:outline-none focus:border-sage"
+                  />
+                  {searchError && <p className="text-xs text-mauve">{searchError}</p>}
+                </>
+              ) : (
+                <p className="text-xs text-brown-light">Recording under <span className="font-medium text-brown">{guestDisplayName}</span></p>
+              )}
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-brown-light">$</span>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="border border-beige-dark bg-white pl-7 pr-3 py-2.5 text-sm rounded-lg w-full focus:outline-none focus:border-sage"
+                />
+              </div>
+              <button
+                onClick={() => handleContributeAndSave(modal.item.id)}
+                disabled={submitting || searching || !amount || (needsIdentity && !searchFirst)}
+                className="bg-sage text-white px-4 py-2.5 text-xs tracking-widest uppercase rounded-full disabled:opacity-50"
+              >
+                {submitting || searching ? "Saving…" : "Confirm"}
+              </button>
+              <button onClick={closeModal} className="text-xs text-brown-light text-center underline underline-offset-2">
+                Close
+              </button>
+            </div>
           </div>
-        </>
+        </div>
       );
     }
 
@@ -490,7 +503,7 @@ export default function Registry() {
         <>
           {item.image_url && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.image_url} alt={item.name} className="w-full aspect-square object-cover rounded-xl" />
+            <img src={item.image_url} alt={item.name} className="w-full max-h-64 object-contain rounded-xl" />
           )}
           <div className="flex flex-col gap-1.5">
             <p className="font-serif italic text-2xl text-brown leading-snug">{item.name}</p>
@@ -540,8 +553,18 @@ export default function Registry() {
 
       {/* Modal */}
       {modal && (
-        <div className="fixed inset-0 bg-brown/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 sm:p-6">
-          <div className={`bg-white rounded-2xl w-full flex flex-col gap-6 shadow-xl max-h-[90vh] overflow-y-auto ${modal.mode === "view-item" ? "p-6 max-w-md" : "p-8 max-w-sm"}`}>
+        <div
+          className="fixed inset-0 bg-brown/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 sm:p-6"
+          onClick={closeModal}
+        >
+          <div
+            className={`bg-white rounded-2xl w-full shadow-xl max-h-[90vh] overflow-y-auto ${
+              modal.mode === "contribute"
+                ? "max-w-lg"
+                : `flex flex-col gap-6 ${modal.mode === "view-item" ? "p-6 max-w-md" : "p-8 max-w-sm"}`
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
             {modalContent}
           </div>
         </div>
