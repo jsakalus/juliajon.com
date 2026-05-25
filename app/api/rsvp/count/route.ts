@@ -24,12 +24,12 @@ export async function GET() {
   const maybeRows = rows.filter((r) => r.wedding_attending_status === "maybe");
 
   const yesNames = yesRows.map((r) => {
-    const g = r.guests as { first_name: string; last_name: string | null } | null;
+    const g = r.guests as unknown as { first_name: string; last_name: string | null } | null;
     return g ? toInitials(g.first_name, g.last_name) : "";
   }).filter(Boolean);
 
   const maybeNames = maybeRows.map((r) => {
-    const g = r.guests as { first_name: string; last_name: string | null } | null;
+    const g = r.guests as unknown as { first_name: string; last_name: string | null } | null;
     return g ? toInitials(g.first_name, g.last_name) : "";
   }).filter(Boolean);
 
