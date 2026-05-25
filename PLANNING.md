@@ -261,11 +261,11 @@ update registry_items set description = 'The peacock ones.' where name = 'Bolesl
 - ✓ Name search → party lookup → per-guest form → submit
 - ✓ API routes: `POST /api/rsvp/search`, `POST /api/rsvp/submit`
 - ✓ "No" is final — existing "no" response shows a polite locked message, no re-edit allowed
-- ✓ "Maybe" option — third button alongside Yes/No; shows "Anything you'd like us to know?" textarea only; all other fields hide AND are cleared when maybe is selected
+- ✓ "Maybe" option — third button alongside Yes/No; shows a venue-size blurb asking for ample notice, plus "Anything you'd like us to know?" textarea; all other fields hide AND are cleared when maybe is selected
 - ✓ Contact fields (email + cell) — pre-filled from `guests` table; submit patches `guests.email` and `guests.phone` if changed
 - ✓ Travel mode question — "Have you booked your flights?" → `travel_mode`: `'flying_booked'` / `'flying_not_booked'` / `'driving'`
 - ✓ "Party hard?" question — saves to `staying_late` boolean
-- ✓ Flower garden visualization of responded/maybe counts shown after submit
+- ✓ Flower garden visualization of responded/maybe counts shown after submit; hover (desktop) or tap (mobile) a flower to reveal guest initials (e.g. K.S.) — full names are computed server-side only and never sent to the client
 - ✓ On successful submit, saves `rsvp_guest_id` AND `rsvp_guest_name` to localStorage (used by registry page for attribution)
 - ✓ Email + cell fields stack vertically on mobile (fixed: was side-by-side and getting cut off)
 - [ ] Test RSVP end-to-end on live site
@@ -482,22 +482,16 @@ alter table guests alter column last_name drop not null;
 - ✓ `lib/resend.ts` — lazy Resend client singleton
 - ✓ `lib/emails.ts` — two email functions: `sendGuestConfirmation` and `sendAdminNotification`
 - ✓ `app/api/rsvp/submit/route.ts` — sends emails after every successful RSVP upsert
-- ✓ Guest confirmation email — sent to each guest with an email on file; subject searchable by "Julia & Jonathan's Wedding"; contains ceremony/reception details (with Google Maps links), welcome dinner status if invited, dietary notes, travel mode, link to juliajon.com. Status bar color: sage (yes), terracotta (no), gold (maybe).
-- ✓ Admin notification email — sent to Julia and Jon on every RSVP submission; subject is "New RSVP: [Party Name]" or "RSVP Changed: [Name] (yes -> maybe)"; shows all guest response fields; flags any status changes in terracotta; shows responded/pending guest count at bottom.
+- ✓ Guest confirmation email — sent to each guest with an email on file; subject searchable by "Julia & Jonathan's Wedding"; contains ceremony/reception details (with Google Maps links), welcome dinner status if invited, dietary notes, travel mode, link to juliajon.com. Status bar color: sage (yes), terracotta (no), gold (maybe). "Maybe" variant has a streamlined header and closes with "Julia & Jonathan" on its own line.
+- ✓ Admin notification email — sent to Julia and Jon on every RSVP submission; subject is "New RSVP: First Last & First Last" or "RSVP Changed: First Last (yes -> maybe)"; header shows guest first names joined with &; shows all guest response fields; flags status changes in terracotta; 5-column tally (yes wedding/dinner/party, maybe, no) filtered to `invite_mailed=true` parties; responds/pending count at bottom. When no invites have been mailed yet, falls back to current submission data for the tally.
 - ✓ Email errors are caught and logged but never fail the RSVP submission.
 - ✓ Existing "no" lock still applies: guests whose previous status is "no" are skipped and receive no email.
 
-**Setup still needed (before emails will send):**
-1. Go to [resend.com](https://resend.com) and create a free account
-2. In Resend: Settings > Domains > Add Domain > enter `juliajon.com`
-3. Resend will give you DNS records to add. In Squarespace: Settings > Domains > juliajon.com > DNS Settings > add each record
-4. Once verified, go to Resend: API Keys > Create API Key > copy it
-5. Paste into `.env.local` as `RESEND_API_KEY=re_xxxx...`
-6. Add the same 4 new env vars to the Vercel dashboard (Settings > Environment Variables):
-   - `RESEND_API_KEY`
-   - `FROM_EMAIL` = `Julia & Jon <wedding@juliajon.com>`
-   - `ADMIN_EMAIL_JULIA` = `jmsakalus@gmail.com`
-   - `ADMIN_EMAIL_JON` = `sagejonathan.tesol@gmail.com`
+**Setup complete** — all 4 env vars added to `.env.local` and Vercel dashboard:
+- `RESEND_API_KEY`
+- `FROM_EMAIL` = `Julia & Jonathan <wedding@juliajon.com>`
+- `ADMIN_EMAIL_JULIA` = `jmsakalus@gmail.com`
+- `ADMIN_EMAIL_JON` = `sagejonathan.tesol@gmail.com`
 
 ### SMS (Twilio) ← NOT STARTED
 - [ ] RSVP reminder texts
