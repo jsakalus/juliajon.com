@@ -79,20 +79,81 @@ export function guestConfirmationHtml(
     ? `Hi ${firstNames[0]},`
     : `Hi ${firstNames.join(" & ")},`;
 
-  const anyYes   = guestsWithResponses.some((g) => g.response.wedding_attending_status === "yes");
-  const anyMaybe = guestsWithResponses.some((g) => g.response.wedding_attending_status === "maybe");
+  const yesGuests   = guestsWithResponses.filter((g) => g.response.wedding_attending_status === "yes");
+  const noGuests    = guestsWithResponses.filter((g) => g.response.wedding_attending_status === "no");
+  const maybeGuests = guestsWithResponses.filter((g) => g.response.wedding_attending_status === "maybe");
+
+  const hasYes   = yesGuests.length > 0;
+  const hasNo    = noGuests.length > 0;
+  const hasMaybe = maybeGuests.length > 0;
+  const allYes   = guestsWithResponses.every((g) => g.response.wedding_attending_status === "yes");
   const allNo    = guestsWithResponses.every((g) => g.response.wedding_attending_status === "no");
+  const allMaybe = guestsWithResponses.every((g) => g.response.wedding_attending_status === "maybe");
+  const isMixed  = !allYes && !allNo && !allMaybe;
 
-  const isYes   = anyYes;
-  const isMaybe = !anyYes && anyMaybe;
+  const nameList = (guests: GuestWithResponse[]) =>
+    guests.map((g) => esc(g.guest.first_name)).join(" &amp; ");
+
+  // For backwards-compat with existing single-status usage
+  const isYes   = allYes;
+  const isMaybe = allMaybe;
   const isNo    = allNo;
-  const showEventDetails = isYes || isMaybe;
+  const showEventDetails = hasYes || hasMaybe;
 
-  const statusText = isYes
-    ? "✿ We will see you in Canmore! ✿"
-    : isNo
-    ? "We are so sorry you cannot make it."
-    : "We have got your maybe. We will keep your spot open for now.";
+  // Header background: sage if anyone is coming, gold if only maybes, terracotta if all no
+  const headerBg = hasYes ? "#578C6C" : hasMaybe ? "#E89410" : "#D85E28";
+
+  // Header tagline
+  let statusText: string;
+  if (allYes) {
+    statusText = "✿ We will see you in Canmore! ✿";
+  } else if (allNo) {
+    statusText = "We are so sorry you cannot make it.";
+  } else if (allMaybe) {
+    statusText = "We have got your maybe. We will keep your spot open for now.";
+  } else if (hasYes && hasMaybe && !hasNo) {
+    statusText = `✿ See you there, ${nameList(yesGuests)}. Fingers crossed for you too, ${nameList(maybeGuests)}. ✿`;
+  } else if (hasYes && hasNo && !hasMaybe) {
+    statusText = `✿ See you in Canmore, ${nameList(yesGuests)}. We will miss you, ${nameList(noGuests)}. ✿`;
+  } else {
+    statusText = "We have got everyone's responses.";
+  }
+
+  // Body intro paragraph
+  let bodyMessage: string;
+  if (allYes) {
+    bodyMessage = "We are SO thrilled you can make it! Here is what we have on file for you.";
+  } else if (allNo) {
+    bodyMessage = "Here is a confirmation of your RSVP. You will be dearly missed.";
+  } else if (allMaybe) {
+    bodyMessage = "Fingers crossed you can make it work!";
+  } else if (hasYes && hasMaybe && !hasNo) {
+    bodyMessage = `We are SO thrilled ${nameList(yesGuests)} can make it! Fingers crossed for ${nameList(maybeGuests)} too.`;
+  } else if (hasYes && hasNo && !hasMaybe) {
+    bodyMessage = `We are SO thrilled ${nameList(yesGuests)} can make it. We will truly miss you, ${nameList(noGuests)}.`;
+  } else if (!hasYes && hasMaybe && hasNo) {
+    bodyMessage = `Fingers crossed ${nameList(maybeGuests)} can join us. We will truly miss you, ${nameList(noGuests)}.`;
+  } else {
+    bodyMessage = "Here is a confirmation of everyone's responses.";
+  }
+
+  // Closing line
+  let closingLine: string;
+  if (allYes) {
+    closingLine = "We cannot wait to hug you in person.";
+  } else if (allNo) {
+    closingLine = "Thank you for letting us know.";
+  } else if (allMaybe) {
+    closingLine = "We hope the stars align and we get to see you there.";
+  } else if (hasYes && hasMaybe && !hasNo) {
+    closingLine = `Cannot wait to see you there, ${nameList(yesGuests)}. Hoping the stars align for you too, ${nameList(maybeGuests)}.`;
+  } else if (hasYes && hasNo && !hasMaybe) {
+    closingLine = `Cannot wait to see you, ${nameList(yesGuests)}. Thank you for letting us know, ${nameList(noGuests)}.`;
+  } else if (!hasYes && hasMaybe && hasNo) {
+    closingLine = `Hoping to see you there, ${nameList(maybeGuests)}. Thank you for letting us know, ${nameList(noGuests)}.`;
+  } else {
+    closingLine = "Thank you for letting us know.";
+  }
 
   // Welcome dinner — per-guest rows if multiple guests
   let welcomeDinnerRow = "";
@@ -157,6 +218,11 @@ export function guestConfirmationHtml(
     const guestSections = guestsWithResponses.map(({ guest, response }) => {
       const guestIsMaybe = response.wedding_attending_status === "maybe";
       const rows = [
+        // Show individual wedding status when the party has mixed answers
+        isMixed ? `<tr>
+              <td style="padding:3px 0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;width:120px;vertical-align:top;">Wedding</td>
+              <td style="padding:3px 0;font-size:13px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${statusLabel(response.wedding_attending_status)}</td>
+            </tr>` : "",
         response.dietary_notes ? `<tr>
               <td style="padding:3px 0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;width:120px;vertical-align:top;">Dietary notes</td>
               <td style="padding:3px 0;font-size:13px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${esc(response.dietary_notes)}</td>
@@ -171,7 +237,7 @@ export function guestConfirmationHtml(
             </tr>` : "",
       ].filter(Boolean);
 
-      if (rows.length === 0) return "";
+      if (rows.length === 0 && !isMixed) return "";
 
       return `<tr>
           <td style="padding:16px 0 0;">
@@ -241,16 +307,16 @@ export function guestConfirmationHtml(
 
           <!-- Header -->
           <tr>
-            <td style="background-color:#578C6C;border-radius:8px 8px 0 0;padding:28px 24px 20px;text-align:center;">
+            <td style="background-color:${headerBg};border-radius:8px 8px 0 0;padding:28px 24px 20px;text-align:center;">
               <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:2.5px;color:rgba(255,255,255,0.65);font-family:Arial,Helvetica,sans-serif;">Julia &amp; Jonathan</p>
               <p style="margin:10px 0 0;font-size:28px;color:#ffffff;font-family:Georgia,'Times New Roman',serif;">✿ &nbsp; May 29, 2027 &nbsp; ✿</p>
               <p style="margin:18px auto 0;border-top:1px solid rgba(255,255,255,0.25);width:80%;font-size:0;line-height:0;">&nbsp;</p>
               <p style="margin:14px 0 0;font-size:14px;font-style:italic;color:#ffffff;font-family:Georgia,'Times New Roman',serif;">${statusText}</p>
             </td>
           </tr>
-          <!-- Paintbrush wave — sage to white -->
+          <!-- Paintbrush wave -->
           <tr>
-            <td style="background-color:#578C6C;padding:0;line-height:0;font-size:0;">
+            <td style="background-color:${headerBg};padding:0;line-height:0;font-size:0;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 30" width="520" height="30" style="display:block;width:100%;" preserveAspectRatio="none">
                 <path d="M0,22 C80,10 160,28 240,16 C310,6 390,24 460,14 L520,10 L520,30 L0,30 Z" fill="#ffffff"/>
               </svg>
@@ -266,13 +332,7 @@ export function guestConfirmationHtml(
                 <tr>
                   <td>
                     <p style="margin:0;font-size:16px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${greeting}</p>
-                    <p style="margin:8px 0 0;font-size:15px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">${
-                      isYes
-                        ? "We are SO thrilled you can make it! Here is what we have on file for you."
-                        : isMaybe
-                        ? "Fingers crossed you can make it work!"
-                        : "Here is a confirmation of your RSVP. You will be dearly missed."
-                    }</p>
+                    <p style="margin:8px 0 0;font-size:15px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">${bodyMessage}</p>
                   </td>
                 </tr>
 
@@ -297,18 +357,12 @@ export function guestConfirmationHtml(
                 <!-- Closing -->
                 <tr>
                   <td style="padding-top:20px;">
-                    <p style="margin:0;font-size:15px;color:#2C2018;font-family:Georgia,'Times New Roman',serif;">${
-                      isYes
-                        ? "We cannot wait to hug you in person."
-                        : isMaybe
-                        ? "We hope the stars align and we get to see you there."
-                        : "Thank you for letting us know."
-                    }</p>
-                    ${isMaybe
+                    <p style="margin:0;font-size:15px;color:#2C2018;font-family:Georgia,'Times New Roman',serif;">${closingLine}</p>
+                    ${allMaybe
                       ? `<p style="margin:12px 0 0;font-size:15px;color:#2C2018;font-family:Georgia,'Times New Roman',serif;">Julia &amp; Jonathan</p>`
                       : `<p style="margin:6px 0 0;font-size:15px;color:#2C2018;font-family:Georgia,'Times New Roman',serif;">With love, Julia and Jonathan</p>`
                     }
-                    ${isYes ? `<p style="margin:16px 0 0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">P.S. Peanut has been informed and is equally excited.</p>` : ""}
+                    ${allYes ? `<p style="margin:16px 0 0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">P.S. Peanut has been informed and is equally excited.</p>` : ""}
                   </td>
                 </tr>
 
@@ -514,13 +568,22 @@ export async function sendGuestConfirmation(
 
   if (emails.length === 0) return;
 
-  const anyYes   = guestsWithResponses.some((g) => g.response.wedding_attending_status === "yes");
-  const anyMaybe = guestsWithResponses.some((g) => g.response.wedding_attending_status === "maybe");
-  const statusSuffix = anyYes
+  const allYesS   = guestsWithResponses.every((g) => g.response.wedding_attending_status === "yes");
+  const allNoS    = guestsWithResponses.every((g) => g.response.wedding_attending_status === "no");
+  const hasYesS   = guestsWithResponses.some((g) => g.response.wedding_attending_status === "yes");
+  const hasMaybeS = guestsWithResponses.some((g) => g.response.wedding_attending_status === "maybe");
+  const hasNoS    = guestsWithResponses.some((g) => g.response.wedding_attending_status === "no");
+  const statusSuffix = allYesS
     ? "See you in Canmore!"
-    : anyMaybe
+    : allNoS
+    ? "We will miss you"
+    : !hasYesS && hasMaybeS && !hasNoS
     ? "We have got your maybe"
-    : "We will miss you";
+    : hasYesS && hasMaybeS && !hasNoS
+    ? "See you there. We have got your maybe too"
+    : hasYesS && hasNoS && !hasMaybeS
+    ? "We have got everyone's response"
+    : "We have got your responses";
 
   const html = guestConfirmationHtml(guestsWithResponses, partyInvitedToWelcomeDinner);
 
