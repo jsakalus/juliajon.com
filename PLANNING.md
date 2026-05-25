@@ -155,9 +155,13 @@ Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API
 - [ ] Add cocktail hour if applicable
 - [ ] Fill in Welcome Dinner time once confirmed
 
-#### Travel (`/travel`)
-- [ ] Add nearest airports and driving directions to Canmore
-- [ ] Add tips for getting around (rental car, shuttle, etc.)
+#### Travel (`/travel`) ← MOSTLY COMPLETE
+- ✓ Page redesigned to match FAQ/Where-to-Stay aesthetic: hero (handwritten + bold serif + italic), white rounded cards, handwritten section labels with wildflower accent colors
+- ✓ Two sections: "flying in" (primary) and "driving in" (secondary)
+- ✓ Car rental grouped under flying section, framed as a requirement (not optional)
+- ✓ Sage ✿ chip teasing arrival-time coordination feature for car sharing (Phase 4+ feature)
+- ✓ Shuttle option removed
+- [ ] Implement arrival time coordination feature (see Phase 4+ nice-to-haves)
 
 #### Where to Stay (`/where-to-stay`) ← MOSTLY COMPLETE
 - ✓ Page redesigned to match FAQ aesthetic: hero (handwritten + bold serif + italic), white rounded cards, handwritten section labels with wildflower accent colors
