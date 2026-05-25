@@ -244,15 +244,6 @@ update registry_items set description = 'Julia loves everything from East Fork. 
 update registry_items set description = 'The peacock ones.' where name = 'Boleslawiec Dinnerware';
 ```
 
-**Items still needing external URLs** (add in Supabase table editor):
-- East Fork Dinner Set
-- Boleslawiec Dinnerware
-- Handmade Blown Glass Glasses
-- Honeymoon Fund (Venmo / e-transfer link)
-- House Fund (Venmo / e-transfer link)
-- Skydiving Fund (Venmo / e-transfer link + confirm goal amount)
-- Bike Fund (Venmo / e-transfer link)
-
 #### RSVP (`/rsvp`) ← MOSTLY COMPLETE
 - ✓ Name search → party lookup → per-guest form → submit
 - ✓ API routes: `POST /api/rsvp/search`, `POST /api/rsvp/submit`
@@ -488,6 +479,10 @@ alter table guests alter column last_name drop not null;
 - `FROM_EMAIL` = `Julia & Jonathan <wedding@juliajon.com>`
 - `ADMIN_EMAIL_JULIA` = `jmsakalus@gmail.com`
 - `ADMIN_EMAIL_JON` = `sagejonathan.tesol@gmail.com`
+
+### Additional Email Templates ← NOT STARTED
+- [ ] "Maybe" nudge — sent to guests whose `wedding_attending_status = 'maybe'` as the RSVP deadline approaches; prompt them to confirm yes or no
+- [ ] Transportation nudge — sent to guests who have not confirmed travel (`travel_mode` is null or not set); prompt them to update their RSVP with flight/driving status
 
 ### SMS (Twilio) ← NOT STARTED
 - [ ] RSVP reminder texts

@@ -184,6 +184,7 @@ export default function RSVP() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [responses, setResponses] = useState<Record<string, RsvpEntry>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -478,9 +479,6 @@ export default function RSVP() {
         welcome_dinner_status: null,
         travel_mode: null,
         staying_late: null,
-        dietary_notes: "",
-        email: "",
-        cell: "",
       },
     }));
     playBoing();
@@ -488,8 +486,24 @@ export default function RSVP() {
     setTimeout(() => setShowMaybePop(false), 1400);
   };
 
+  const handleNoClick = (memberId: string) => {
+    setResponses((prev) => ({
+      ...prev,
+      [memberId]: {
+        ...prev[memberId],
+        wedding_attending_status: "no",
+        welcome_dinner_status: null,
+        travel_mode: null,
+        staying_late: null,
+        dietary_notes: "",
+        maybe_reason: "",
+      },
+    }));
+  };
+
   const updateResponse = (guestId: string, field: keyof RsvpEntry, value: unknown) => {
     setResponses((prev) => ({ ...prev, [guestId]: { ...prev[guestId], [field]: value } }));
+    if (field === "email") setFieldErrors((prev) => { const next = { ...prev }; delete next[guestId]; return next; });
   };
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -581,7 +595,12 @@ export default function RSVP() {
 
     if (missingEmail.length > 0) {
       const names = missingEmail.map((m) => m.first_name).join(", ");
+      const errors = Object.fromEntries(missingEmail.map((m) => [m.id, true]));
+      setFieldErrors(errors);
       setError(`Please add an email address for: ${names}`);
+      setTimeout(() => {
+        document.getElementById(`email-${missingEmail[0].id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 50);
       return;
     }
 
@@ -904,8 +923,8 @@ export default function RSVP() {
 
           {/* ── Error ── */}
           {error && (
-            <div className="bg-white p-6 border-l-4 border-l-mauve rounded-xl mb-6">
-              <p className="text-sm text-brown-light">{error}</p>
+            <div className="bg-terracotta/10 border border-terracotta/40 p-4 rounded-xl mb-6">
+              <p className="text-sm font-semibold text-terracotta">{error}</p>
             </div>
           )}
 
@@ -969,7 +988,7 @@ export default function RSVP() {
                                 value="no"
                                 label="Regretfully, no"
                                 activeClass="bg-mauve text-white border-mauve"
-                                onClick={() => updateResponse(member.id, "wedding_attending_status", "no")}
+                                onClick={() => handleNoClick(member.id)}
                               />
                               <Image
                                 src="/peanut/Regretfully no.png"
@@ -1127,7 +1146,12 @@ export default function RSVP() {
                           />
                         </div>
 
-                        {/* Contact info */}
+                        </>
+                        )}
+                        </>
+                        )}
+
+                        {/* Contact info — always shown */}
                         <div className="flex flex-col gap-3">
                           <p className="text-xs tracking-widest uppercase text-brown-light">
                             Contact info <span className="normal-case">(so we can reach you)</span>
@@ -1136,12 +1160,16 @@ export default function RSVP() {
                             <div className="flex flex-col gap-1.5 flex-1">
                               <label className="text-xs text-brown-light">Email <span className="text-mauve">*</span></label>
                               <input
+                                id={`email-${member.id}`}
                                 type="email"
                                 value={r?.email ?? ""}
                                 onChange={(e) => updateResponse(member.id, "email", e.target.value)}
-                                className="border border-beige-dark bg-white px-3 py-2.5 text-sm w-full rounded-lg focus:outline-none focus:border-sage"
+                                className={`border bg-white px-3 py-2.5 text-sm w-full rounded-lg focus:outline-none focus:border-sage ${fieldErrors[member.id] ? "border-terracotta" : "border-beige-dark"}`}
                                 placeholder="your@email.com"
                               />
+                              {fieldErrors[member.id] && (
+                                <p className="text-xs text-terracotta">Please add an email address</p>
+                              )}
                             </div>
                             <div className="flex flex-col gap-1.5 flex-1">
                               <label className="text-xs text-brown-light">Cell</label>
@@ -1165,11 +1193,6 @@ export default function RSVP() {
                             </div>
                           </div>
                         </div>
-
-                        </>
-                        )}
-                        </>
-                        )}
                       </>
                     )}
                   </div>
