@@ -537,8 +537,55 @@ export default function RSVP() {
     setResponses(initial);
   };
 
+  const hasExistingResponse = (result?.existingResponses?.length ?? 0) > 0;
+
+  const hasChanges = result?.members.some((m) => {
+    const prev = result?.existingResponses?.find((e) => e.guest_id === m.id);
+    const curr = responses[m.id];
+    if (!curr) return false;
+    if (prev?.wedding_attending_status === "no") return false;
+    if (!prev) {
+      return !!(
+        curr.wedding_attending_status ||
+        curr.dietary_notes?.trim() ||
+        curr.maybe_reason?.trim() ||
+        curr.travel_mode ||
+        curr.staying_late !== null ||
+        curr.email.trim() !== (m.email ?? "") ||
+        curr.cell !== (m.phone ? formatPhone(m.phone) : "")
+      );
+    }
+    return (
+      curr.wedding_attending_status !== prev.wedding_attending_status ||
+      curr.welcome_dinner_status !== (prev.welcome_dinner_status ?? null) ||
+      curr.maybe_reason !== (prev.maybe_reason ?? "") ||
+      curr.dietary_notes !== (prev.dietary_notes ?? "") ||
+      curr.travel_mode !== (prev.travel_mode ?? null) ||
+      curr.staying_late !== (prev.staying_late ?? null) ||
+      curr.email.trim() !== (m.email ?? "").trim() ||
+      curr.cell !== (m.phone ? formatPhone(m.phone) : "")
+    );
+  }) ?? false;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const allMembers = result?.members ?? [];
+    const missingEmail = allMembers.filter((m) => {
+      const existingResponse = result?.existingResponses?.find((ex) => ex.guest_id === m.id);
+      const previouslyDeclined = existingResponse?.wedding_attending_status === "no";
+      const currentlyNo = responses[m.id]?.wedding_attending_status === "no";
+      if (previouslyDeclined || currentlyNo) return false;
+      return !responses[m.id]?.email?.trim();
+    });
+
+    if (missingEmail.length > 0) {
+      const names = missingEmail.map((m) => m.first_name).join(", ");
+      setError(`Please add an email address for: ${names}`);
+      return;
+    }
+
+    setError(null);
     setSubmitting(true);
 
     await fetch("/api/rsvp/submit", {
@@ -1087,7 +1134,7 @@ export default function RSVP() {
                           </p>
                           <div className="flex flex-col sm:flex-row gap-4">
                             <div className="flex flex-col gap-1.5 flex-1">
-                              <label className="text-xs text-brown-light">Email</label>
+                              <label className="text-xs text-brown-light">Email <span className="text-mauve">*</span></label>
                               <input
                                 type="email"
                                 value={r?.email ?? ""}
@@ -1131,10 +1178,10 @@ export default function RSVP() {
 
               <button
                 type="submit"
-                disabled={submitting}
-                className="bg-sage text-white px-6 py-3 text-sm tracking-widest uppercase hover:bg-sage-dark transition-colors self-start rounded-full disabled:opacity-50"
+                disabled={submitting || (hasExistingResponse && !hasChanges)}
+                className="bg-sage text-white px-6 py-3 text-sm tracking-widest uppercase hover:bg-sage-dark transition-colors self-start rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? "Submitting…" : "Submit RSVP"}
+                {submitting ? "Saving…" : hasExistingResponse ? "Update RSVP" : "Submit RSVP"}
               </button>
             </form>
           )}

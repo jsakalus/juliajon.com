@@ -71,33 +71,53 @@ function travelLabel(mode: string | null): string {
 // ---- guest confirmation email ----
 
 export function guestConfirmationHtml(
-  guest: GuestInfo,
-  response: RsvpEntry,
+  guestsWithResponses: GuestWithResponse[],
   partyInvitedToWelcomeDinner: boolean
 ): string {
-  const status = response.wedding_attending_status;
-  const isYes   = status === "yes";
-  const isMaybe = status === "maybe";
-  const isNo    = status === "no";
+  const firstNames = guestsWithResponses.map((g) => esc(g.guest.first_name));
+  const greeting = firstNames.length === 1
+    ? `Hi ${firstNames[0]},`
+    : `Hi ${firstNames.join(" & ")},`;
+
+  const anyYes   = guestsWithResponses.some((g) => g.response.wedding_attending_status === "yes");
+  const anyMaybe = guestsWithResponses.some((g) => g.response.wedding_attending_status === "maybe");
+  const allNo    = guestsWithResponses.every((g) => g.response.wedding_attending_status === "no");
+
+  const isYes   = anyYes;
+  const isMaybe = !anyYes && anyMaybe;
+  const isNo    = allNo;
   const showEventDetails = isYes || isMaybe;
 
-  const statusBg   = isYes ? "#578C6C" : isNo ? "#6B5848" : "#E89410";
   const statusText = isYes
     ? "✿ We will see you in Canmore! ✿"
     : isNo
     ? "We are so sorry you cannot make it."
     : "We have got your maybe. We will keep your spot open for now.";
 
-  const welcomeDinnerRow =
-    partyInvitedToWelcomeDinner && response.welcome_dinner_status
-      ? `<tr>
+  // Welcome dinner — per-guest rows if multiple guests
+  let welcomeDinnerRow = "";
+  if (partyInvitedToWelcomeDinner) {
+    const dinnerGuests = guestsWithResponses.filter((g) => g.response.welcome_dinner_status);
+    if (dinnerGuests.length === 1) {
+      welcomeDinnerRow = `<tr>
           <td style="padding:14px 0 0;border-top:1px solid #EBE2CE;">
             <p style="margin:0 0 3px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">Welcome Dinner</p>
             <p style="margin:0;font-size:15px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">Friday, May 28, 2027</p>
-            <p style="margin:2px 0 0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">Your answer: ${statusLabel(response.welcome_dinner_status)}</p>
+            <p style="margin:2px 0 0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">Your answer: ${statusLabel(dinnerGuests[0].response.welcome_dinner_status)}</p>
           </td>
-        </tr>`
-      : "";
+        </tr>`;
+    } else if (dinnerGuests.length > 1) {
+      const perPerson = dinnerGuests
+        .map((g) => `${esc(g.guest.first_name)}: ${statusLabel(g.response.welcome_dinner_status)}`)
+        .join(" &nbsp;&bull;&nbsp; ");
+      welcomeDinnerRow = `<tr>
+          <td style="padding:14px 0 0;border-top:1px solid #EBE2CE;">
+            <p style="margin:0 0 3px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">Welcome Dinner &mdash; Friday, May 28, 2027</p>
+            <p style="margin:0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">${perPerson}</p>
+          </td>
+        </tr>`;
+    }
+  }
 
   const eventBlock = showEventDetails
     ? `<tr>
@@ -129,45 +149,82 @@ export function guestConfirmationHtml(
       </tr>`
     : "";
 
-  const dietaryRow = response.dietary_notes
-    ? `<tr>
+  // Extra details — per-guest labeled sections if multiple, single block if one
+  let extraDetailsBlock = "";
+  const isMultiGuest = guestsWithResponses.length > 1;
+
+  if (isMultiGuest) {
+    const guestSections = guestsWithResponses.map(({ guest, response }) => {
+      const guestIsMaybe = response.wedding_attending_status === "maybe";
+      const rows = [
+        response.dietary_notes ? `<tr>
+              <td style="padding:3px 0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;width:120px;vertical-align:top;">Dietary notes</td>
+              <td style="padding:3px 0;font-size:13px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${esc(response.dietary_notes)}</td>
+            </tr>` : "",
+        response.travel_mode ? `<tr>
+              <td style="padding:3px 0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">Getting there</td>
+              <td style="padding:3px 0;font-size:13px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${travelLabel(response.travel_mode)}</td>
+            </tr>` : "",
+        guestIsMaybe && response.maybe_reason ? `<tr>
+              <td style="padding:3px 0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;vertical-align:top;">Your note</td>
+              <td style="padding:3px 0;font-size:13px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${esc(response.maybe_reason)}</td>
+            </tr>` : "",
+      ].filter(Boolean);
+
+      if (rows.length === 0) return "";
+
+      return `<tr>
+          <td style="padding:16px 0 0;">
+            <p style="margin:0 0 6px;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${esc(guest.first_name)}</p>
+            <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="width:100%;">${rows.join("")}</table>
+          </td>
+        </tr>`;
+    }).filter(Boolean).join("");
+
+    if (guestSections) {
+      extraDetailsBlock = `<tr>
+        <td style="padding:20px 0 0;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">
+            ${guestSections}
+          </table>
+        </td>
+      </tr>`;
+    }
+  } else {
+    const { response } = guestsWithResponses[0];
+    const guestIsMaybe = response.wedding_attending_status === "maybe";
+
+    const dietaryRow = response.dietary_notes ? `<tr>
         <td style="padding:16px 0 0;">
           <p style="margin:0 0 3px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">Dietary Notes</p>
           <p style="margin:0;font-size:15px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${esc(response.dietary_notes)}</p>
         </td>
-      </tr>`
-    : "";
+      </tr>` : "";
 
-  const travelRow = response.travel_mode
-    ? `<tr>
+    const travelRow = response.travel_mode ? `<tr>
         <td style="padding:16px 0 0;">
           <p style="margin:0 0 3px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">Getting There</p>
           <p style="margin:0;font-size:15px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${travelLabel(response.travel_mode)}</p>
         </td>
-      </tr>`
-    : "";
+      </tr>` : "";
 
-  const maybeReasonRow = isMaybe && response.maybe_reason
-    ? `<tr>
+    const maybeReasonRow = guestIsMaybe && response.maybe_reason ? `<tr>
         <td style="padding:16px 0 0;">
           <p style="margin:0 0 3px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">Your Note</p>
           <p style="margin:0;font-size:15px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${esc(response.maybe_reason)}</p>
         </td>
-      </tr>`
-    : "";
+      </tr>` : "";
 
-  const extraDetailsBlock =
-    response.dietary_notes || response.travel_mode || (isMaybe && response.maybe_reason)
-      ? `<tr>
-          <td style="padding:20px 0 0;">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">
-              ${dietaryRow}
-              ${travelRow}
-              ${maybeReasonRow}
-            </table>
-          </td>
-        </tr>`
-      : "";
+    if (response.dietary_notes || response.travel_mode || (guestIsMaybe && response.maybe_reason)) {
+      extraDetailsBlock = `<tr>
+        <td style="padding:20px 0 0;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">
+            ${dietaryRow}${travelRow}${maybeReasonRow}
+          </table>
+        </td>
+      </tr>`;
+    }
+  }
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -187,7 +244,6 @@ export function guestConfirmationHtml(
             <td style="background-color:#578C6C;border-radius:8px 8px 0 0;padding:28px 24px 20px;text-align:center;">
               <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:2.5px;color:rgba(255,255,255,0.65);font-family:Arial,Helvetica,sans-serif;">Julia &amp; Jonathan</p>
               <p style="margin:10px 0 0;font-size:28px;color:#ffffff;font-family:Georgia,'Times New Roman',serif;">✿ &nbsp; May 29, 2027 &nbsp; ✿</p>
-              ${!isMaybe ? `<p style="margin:6px 0 0;font-size:12px;color:rgba(255,255,255,0.75);font-family:Arial,Helvetica,sans-serif;">are getting married in Canmore, Alberta</p>` : ""}
               <p style="margin:18px auto 0;border-top:1px solid rgba(255,255,255,0.25);width:80%;font-size:0;line-height:0;">&nbsp;</p>
               <p style="margin:14px 0 0;font-size:14px;font-style:italic;color:#ffffff;font-family:Georgia,'Times New Roman',serif;">${statusText}</p>
             </td>
@@ -209,7 +265,7 @@ export function guestConfirmationHtml(
                 <!-- Greeting -->
                 <tr>
                   <td>
-                    <p style="margin:0;font-size:16px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">Hi ${esc(guest.first_name)},</p>
+                    <p style="margin:0;font-size:16px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${greeting}</p>
                     <p style="margin:8px 0 0;font-size:15px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">${
                       isYes
                         ? "We are SO thrilled you can make it! Here is what we have on file for you."
@@ -449,25 +505,35 @@ export function adminNotificationHtml(
 // ---- exported send functions ----
 
 export async function sendGuestConfirmation(
-  guest: GuestInfo,
-  response: RsvpEntry,
+  guestsWithResponses: GuestWithResponse[],
   partyInvitedToWelcomeDinner: boolean
 ): Promise<void> {
-  if (!guest.email) return;
+  const emails = guestsWithResponses
+    .map(({ guest }) => guest.email)
+    .filter((e): e is string => !!e);
 
-  const statusSuffix =
-    response.wedding_attending_status === "yes"
-      ? "See you in Canmore!"
-      : response.wedding_attending_status === "no"
-      ? "We will miss you"
-      : "We have got your maybe";
+  if (emails.length === 0) return;
 
-  await getResend().emails.send({
-    from: FROM,
-    to: guest.email,
-    subject: `Your RSVP for Julia & Jonathan's Wedding: ${statusSuffix}`,
-    html: guestConfirmationHtml(guest, response, partyInvitedToWelcomeDinner),
-  });
+  const anyYes   = guestsWithResponses.some((g) => g.response.wedding_attending_status === "yes");
+  const anyMaybe = guestsWithResponses.some((g) => g.response.wedding_attending_status === "maybe");
+  const statusSuffix = anyYes
+    ? "See you in Canmore!"
+    : anyMaybe
+    ? "We have got your maybe"
+    : "We will miss you";
+
+  const html = guestConfirmationHtml(guestsWithResponses, partyInvitedToWelcomeDinner);
+
+  await Promise.allSettled(
+    emails.map((email) =>
+      getResend().emails.send({
+        from: FROM,
+        to: email,
+        subject: `Your RSVP for Julia & Jonathan's Wedding: ${statusSuffix}`,
+        html,
+      })
+    )
+  );
 }
 
 export async function sendAdminNotification(
