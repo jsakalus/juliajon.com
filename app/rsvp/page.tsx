@@ -756,7 +756,7 @@ export default function RSVP() {
 
             {/* Deadline */}
             <p className="font-sans text-brown-light text-sm md:text-base tracking-wide mt-1">
-              or by Jan 1, 2027
+              or by March 1, 2027
             </p>
 
             {/* Subhead */}
