@@ -210,11 +210,13 @@ export function guestConfirmationHtml(
                 <tr>
                   <td>
                     <p style="margin:0;font-size:16px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">Hi ${esc(guest.first_name)},</p>
-                    ${!isMaybe ? `<p style="margin:8px 0 0;font-size:15px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">${
+                    <p style="margin:8px 0 0;font-size:15px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">${
                       isYes
                         ? "We are SO thrilled you can make it! Here is what we have on file for you."
+                        : isMaybe
+                        ? "Fingers crossed you can make it work!"
                         : "Here is a confirmation of your RSVP. You will be dearly missed."
-                    }</p>` : ""}
+                    }</p>
                   </td>
                 </tr>
 

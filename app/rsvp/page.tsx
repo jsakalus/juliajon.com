@@ -905,6 +905,9 @@ export default function RSVP() {
                         {/* Maybe reason */}
                         {r?.wedding_attending_status === "maybe" && (
                           <div className="flex flex-col gap-1.5">
+                            <p className="text-sm text-brown-light leading-relaxed bg-beige rounded-lg px-4 py-3">
+                              We understand if you can&apos;t commit right away — as the day draws nearer we&apos;ll send you periodic reminders. We would love for you to come, but if you&apos;re unsure, please please please let us know ahead of time. Our venue is very small, and we were only able to invite a small number of people — which means we couldn&apos;t invite all our favorite people at once. To prevent last-minute cancellations and allow more of our friends a chance to come, please let us know with ample notice.
+                            </p>
                             <label className="text-xs tracking-widest uppercase text-brown-light">
                               Anything you&apos;d like us to know? <span className="normal-case">(optional)</span>
                             </label>
