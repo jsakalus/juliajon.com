@@ -281,6 +281,9 @@ export function adminNotificationHtml(
   stats: RsvpStats
 ): string {
   const { respondedMailedCount, totalMailedCount, yesWedding, maybeWedding, noWedding, yesDinner, yesParty } = stats;
+  const displayName = guestsWithResponses.length > 0
+    ? guestsWithResponses.map(({ guest }) => esc(guest.first_name)).join(" & ")
+    : esc(partyName);
   const anyChanged = guestsWithResponses.some(
     ({ response, previousStatus }) =>
       previousStatus !== null && previousStatus !== response.wedding_attending_status
@@ -363,7 +366,7 @@ export function adminNotificationHtml(
           <tr>
             <td style="background-color:#578C6C;border-radius:8px 8px 0 0;padding:22px 24px 18px;text-align:center;">
               <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.65);font-family:Arial,Helvetica,sans-serif;">${headerLabel}</p>
-              <p style="margin:6px 0 0;font-size:22px;color:#ffffff;font-family:Georgia,'Times New Roman',serif;">${esc(partyName)}</p>
+              <p style="margin:6px 0 0;font-size:22px;color:#ffffff;font-family:Georgia,'Times New Roman',serif;">${displayName}</p>
             </td>
           </tr>
           <!-- Paintbrush wave — sage to white -->
@@ -487,9 +490,13 @@ export async function sendAdminNotification(
     )
     .join(", ");
 
+  const guestDisplayName = guestsWithResponses.length > 0
+    ? guestsWithResponses.map(({ guest }) => guest.first_name).join(" & ")
+    : partyName;
+
   const subject = anyChanged
     ? `RSVP Changed: ${changedSummary}`
-    : `New RSVP: ${partyName}`;
+    : `New RSVP: ${guestDisplayName}`;
 
   await getResend().emails.send({
     from: FROM,
