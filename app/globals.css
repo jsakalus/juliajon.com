@@ -125,6 +125,6 @@ body {
   80%, 100% { transform: translateY(calc(-100% + 4.5rem)); }
 }
 
-.fund-card:hover .desc-scroll-inner {
+.fund-card:hover .desc-scroll-inner.desc-overflows {
   animation: desc-scroll 5s ease-in-out forwards;
 }

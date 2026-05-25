@@ -17,6 +17,7 @@
 - **Known issue**: The top navigation is not mobile-friendly — it needs a hamburger menu or equivalent for small screens. This must be fixed before Phase 3 pages are considered complete.
 - **No em dashes**: Never use em dashes (—) anywhere in site copy. Use a period, comma, or semicolon to break up sentences instead.
 - **Venue name**: The reception venue is "A Bear and Bison Inn" (not "The Bear and Bison Inn"). Always use "A Bear and Bison Inn".
+- **Update this doc**: After every meaningful change to the site, update PLANNING.md to reflect what was built, what changed, and the current status of each section. Keep it accurate so another agent or collaborator can pick up where work left off without needing conversation history.
 
 ---
 
@@ -94,9 +95,10 @@ If any of these change, update **all** locations listed.
 #### Mobile Nav (global — must be done first)
 - ✓ Replaced the current nav with a responsive version: full nav on desktop, hamburger menu on mobile
 
-#### Home (`/`)
+#### Home (`/`) ← COMPLETE
 - ✓ Hero copy finalized
-- [ ] Add photos and fun elements (engagement photos, venue, etc.)
+- ✓ Peanut rain animation plays on first visit per browser session
+- [ ] Add photos and fun elements (optional, can add later)
 
 #### Gamification ← IN PROGRESS
 
@@ -147,7 +149,10 @@ Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API
 - [ ] Add to nav once content is ready
 
 #### Schedule (`/schedule`) ← MOSTLY COMPLETE
-- ✓ Page redesigned: "welcome to our / WEDDING WEEKEND" header, colored dot timeline with diamond day markers, watercolor illustrations, whimsical handwritten times
+- ✓ Page redesigned (second pass): removed vertical spine timeline; now uses white rounded cards (`bg-white rounded-2xl shadow-sm`) matching FAQ/Travel aesthetic
+- ✓ Day headers: handwritten colored labels ("friday" in lavender, "saturday" in mauve) + uppercase date, matching Travel section headers
+- ✓ Each event in its own card with watercolor illustration as the visual focal point (360×270, fills card width on mobile), serif title, handwritten time in accent color, location link. No colored strips — artwork leads.
+- ✓ Wildflower ✿ divider separates Friday and Saturday sections
 - ✓ Friday May 28: Welcome Dinner (visible to everyone, "Kick off the weekend with us")
 - ✓ Saturday May 29: Ceremony (4:00 PM), Reception (5:00 PM)
 - ✓ Location names link to Google Maps
@@ -202,6 +207,13 @@ Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API
 - ✓ `registry_items` table populated
 - ✓ `SHIPPING_ADDRESS` env var set in `.env.local` and Vercel dashboard
 - ✓ Skydiving Fund goal set to $3,000
+- ✓ Registry tile cards now have visible border (`border-beige-dark`) and `shadow-sm` — contrast was invisible against beige background before
+- ✓ Fund card name font bumped to `text-base`, description font bumped to `text-sm` (was `text-xs`, too small on mobile)
+- ✓ Item descriptions restored — item cards now show description with scroll animation (same `max-h-[4.5rem] overflow-hidden` + `desc-scroll-inner` pattern as funds; requires `fund-card` class on item cards for hover trigger)
+- ✓ Description scroll animation fixed — only animates when text actually overflows container (JS overflow detection; short descriptions stay still). Applies to both fund and item descriptions.
+- ✓ Fund progress bar: removed confusing "/" prefix from goal total (was "/$3,000", now "$3,000")
+- ✓ Item cards: clicking any item card opens a larger modal (`max-w-md`) with full image, name, description, price, availability, "View on site →" and "Mark as purchased" buttons. No "tap to view" hint on card.
+- ✓ Item availability text: changed from "N/M purchased" / "N available" to "N more to go" (shows remaining count); applies to both grid cards and the view-item modal.
 - [ ] Content review with Julia & Jon to finalize items, descriptions, and external URLs
 - [ ] Minor UX tweaks
 
@@ -252,6 +264,7 @@ update registry_items set description = 'The peacock ones.' where name = 'Bolesl
 - ✓ "Party hard?" question — saves to `staying_late` boolean
 - ✓ Flower garden visualization of responded/maybe counts shown after submit
 - ✓ On successful submit, saves `rsvp_guest_id` AND `rsvp_guest_name` to localStorage (used by registry page for attribution)
+- ✓ Email + cell fields stack vertically on mobile (fixed: was side-by-side and getting cut off)
 - [ ] Test RSVP end-to-end on live site
 - [ ] Add last names for single-name guests (needed for name search to work)
 - [ ] Finalize welcome dinner invite list (`invited_to_welcome_dinner` in Supabase)

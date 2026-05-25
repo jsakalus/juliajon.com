@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // TODO: fill in your payment handles before going live
 const PAYMENT_METHODS = {
@@ -37,6 +37,7 @@ type ModalMode =
   | { mode: "return-fund"; pending: PendingClick }
   | { mode: "contribute"; item: RegistryItem }
   | { mode: "mark-purchased"; item: RegistryItem }
+  | { mode: "view-item"; item: RegistryItem }
   | { mode: "identify" };
 
 const LS_PENDING = "registry_pending_click";
@@ -57,6 +58,7 @@ export default function Registry() {
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [shippingAddress, setShippingAddress] = useState<string | null>(null);
+  const descRefs = useRef<Map<string, HTMLParagraphElement>>(new Map());
 
   useEffect(() => {
     const storedId = localStorage.getItem(LS_GUEST_ID);
@@ -84,6 +86,15 @@ export default function Registry() {
       }
     }
   }, []);
+
+  useEffect(() => {
+    descRefs.current.forEach((el) => {
+      const parent = el.parentElement;
+      if (parent) {
+        el.classList.toggle("desc-overflows", el.scrollHeight > parent.clientHeight);
+      }
+    });
+  }, [items]);
 
   async function fetchItems(withGuestId?: string | null) {
     const id = withGuestId ?? guestId;
@@ -469,6 +480,59 @@ export default function Registry() {
         </>
       );
     }
+
+    if (modal.mode === "view-item") {
+      const { item } = modal;
+      const qty = item.purchasers.length;
+      const isSoldOut = item.max_quantity !== null && qty >= item.max_quantity;
+      const hasLimit = item.max_quantity !== null;
+      modalContent = (
+        <>
+          {item.image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.image_url} alt={item.name} className="w-full aspect-square object-cover rounded-xl" />
+          )}
+          <div className="flex flex-col gap-1.5">
+            <p className="font-serif italic text-2xl text-brown leading-snug">{item.name}</p>
+            {item.price && (
+              <p className="text-sm text-brown-light">${item.price.toLocaleString()}</p>
+            )}
+            {item.description && (
+              <p className="text-sm text-brown-light leading-relaxed mt-1">{item.description}</p>
+            )}
+            {hasLimit && (
+              <p className="text-sm text-sage mt-1">
+                {isSoldOut ? "Already purchased" : `${item.max_quantity! - qty} more to go`}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            {item.external_url && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleItemLinkClick(item); closeModal(); }}
+                className="bg-sage text-white px-4 py-2.5 text-xs tracking-widest uppercase rounded-full"
+              >
+                View on site →
+              </button>
+            )}
+            {!isSoldOut && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setModal({ mode: "mark-purchased", item }); }}
+                className="border border-beige-dark text-brown-light px-4 py-2.5 text-xs tracking-widest uppercase rounded-full hover:border-sage hover:text-sage transition-colors"
+              >
+                {qty > 0 ? "Mark as purchased too" : "Mark as purchased"}
+              </button>
+            )}
+            <button
+              onClick={closeModal}
+              className="text-xs text-brown-light text-center underline underline-offset-2"
+            >
+              Close
+            </button>
+          </div>
+        </>
+      );
+    }
   }
 
   return (
@@ -477,7 +541,7 @@ export default function Registry() {
       {/* Modal */}
       {modal && (
         <div className="fixed inset-0 bg-brown/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 sm:p-6">
-          <div className="bg-white rounded-2xl p-8 max-w-sm w-full flex flex-col gap-6 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className={`bg-white rounded-2xl w-full flex flex-col gap-6 shadow-xl max-h-[90vh] overflow-y-auto ${modal.mode === "view-item" ? "p-6 max-w-md" : "p-8 max-w-sm"}`}>
             {modalContent}
           </div>
         </div>
@@ -511,17 +575,23 @@ export default function Registry() {
                       : null;
                   const goalReached = fund.price !== null && fund.price > 0 && fund.total_contributed >= fund.price;
                   return (
-                    <div key={fund.id} className="fund-card bg-white rounded-2xl border border-beige overflow-hidden flex flex-col">
+                    <div key={fund.id} className="fund-card bg-white rounded-2xl border border-beige-dark shadow-sm overflow-hidden flex flex-col">
                       {fund.image_url && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={fund.image_url} alt={fund.name} className="w-full aspect-[4/3] object-cover" />
                       )}
                       <div className="p-4 flex flex-col gap-3 flex-1">
                         <div className="flex flex-col gap-1 flex-1">
-                          <p className="font-serif text-brown text-sm leading-snug">{fund.name}</p>
+                          <p className="font-serif text-brown text-base leading-snug">{fund.name}</p>
                           {fund.description && (
                             <div className="max-h-[4.5rem] overflow-hidden">
-                              <p className="desc-scroll-inner text-xs text-brown-light leading-relaxed">{fund.description}</p>
+                              <p
+                                ref={(el) => {
+                                  if (el) descRefs.current.set(fund.id, el);
+                                  else descRefs.current.delete(fund.id);
+                                }}
+                                className="desc-scroll-inner text-sm text-brown-light leading-relaxed"
+                              >{fund.description}</p>
                             </div>
                           )}
                         </div>
@@ -542,7 +612,7 @@ export default function Registry() {
                               </p>
                               {fund.price && (
                                 <p className="text-xs text-brown-light">
-                                  /${fund.price.toLocaleString()}
+                                  ${fund.price.toLocaleString()}
                                 </p>
                               )}
                             </div>
@@ -586,7 +656,8 @@ export default function Registry() {
                   return (
                     <div
                       key={item.id}
-                      className={`bg-white rounded-2xl border border-beige overflow-hidden flex flex-col transition-opacity ${isSoldOut ? "opacity-60" : ""}`}
+                      onClick={() => setModal({ mode: "view-item", item })}
+                      className={`fund-card bg-white rounded-2xl border border-beige-dark shadow-sm overflow-hidden flex flex-col transition-opacity cursor-pointer ${isSoldOut ? "opacity-60" : ""}`}
                     >
                       {item.image_url && (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -594,32 +665,25 @@ export default function Registry() {
                       )}
                       <div className="p-3 flex flex-col gap-2 flex-1">
                         <div className="flex-1 flex flex-col gap-0.5">
-                          <p className="font-serif text-brown text-sm leading-snug line-clamp-2">{item.name}</p>
+                          <p className="font-serif text-brown text-sm leading-snug">{item.name}</p>
+                          {item.description && (
+                            <div className="max-h-[4.5rem] overflow-hidden">
+                              <p
+                                ref={(el) => {
+                                  if (el) descRefs.current.set(`item-${item.id}`, el);
+                                  else descRefs.current.delete(`item-${item.id}`);
+                                }}
+                                className="desc-scroll-inner text-xs text-brown-light leading-relaxed"
+                              >{item.description}</p>
+                            </div>
+                          )}
                           {item.price && (
                             <p className="text-xs text-brown-light">${item.price.toLocaleString()}</p>
                           )}
                           {hasLimit && (
                             <p className="text-xs text-sage">
-                              {isSoldOut ? "Already purchased" : `${qty}/${item.max_quantity} purchased`}
+                              {isSoldOut ? "Already purchased" : `${item.max_quantity! - qty} more to go`}
                             </p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          {item.external_url && (
-                            <button
-                              onClick={() => handleItemLinkClick(item)}
-                              className="border border-beige-dark text-brown-light px-3 py-1.5 text-xs tracking-widest uppercase rounded-full w-full hover:border-sage hover:text-sage transition-colors"
-                            >
-                              View →
-                            </button>
-                          )}
-                          {!isSoldOut && (
-                            <button
-                              onClick={() => setModal({ mode: "mark-purchased", item })}
-                              className="text-xs text-brown-light underline underline-offset-2 hover:text-brown transition-colors text-center"
-                            >
-                              {qty > 0 ? "Mark as purchased too" : "Mark as purchased"}
-                            </button>
                           )}
                         </div>
                       </div>
