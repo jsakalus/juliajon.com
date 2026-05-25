@@ -483,18 +483,21 @@ export async function sendAdminNotification(
       previousStatus !== null && previousStatus !== response.wedding_attending_status
   );
 
+  const fullName = (guest: GuestInfo) =>
+    [guest.first_name, guest.last_name].filter(Boolean).join(" ");
+
   const changedSummary = guestsWithResponses
     .filter(({ response, previousStatus }) =>
       previousStatus !== null && previousStatus !== response.wedding_attending_status
     )
     .map(
       ({ guest, response, previousStatus }) =>
-        `${guest.first_name} (${previousStatus} -> ${response.wedding_attending_status})`
+        `${fullName(guest)} (${previousStatus} -> ${response.wedding_attending_status})`
     )
     .join(", ");
 
   const guestDisplayName = guestsWithResponses.length > 0
-    ? guestsWithResponses.map(({ guest }) => guest.first_name).join(" & ")
+    ? guestsWithResponses.map(({ guest }) => fullName(guest)).join(" & ")
     : partyName;
 
   const subject = anyChanged
