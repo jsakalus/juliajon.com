@@ -1,14 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const EVENTS = [
+const DAYS = [
   {
-    day: "Friday",
+    day: "friday",
     date: "May 28, 2027",
+    accentColor: "text-lavender",
     events: [
       {
-        dot: "bg-lavender",
-        ring: "ring-lavender/30",
+        accentBg: "bg-lavender",
+        timeColor: "text-lavender",
         image: "/illustrations/welcome-dinner.png",
         alt: "Welcome Dinner",
         title: "Welcome Dinner",
@@ -20,12 +21,13 @@ const EVENTS = [
     ],
   },
   {
-    day: "Saturday",
+    day: "saturday",
     date: "May 29, 2027",
+    accentColor: "text-mauve",
     events: [
       {
-        dot: "bg-mauve",
-        ring: "ring-mauve/30",
+        accentBg: "bg-mauve",
+        timeColor: "text-mauve",
         image: "/illustrations/ceremony.png",
         alt: "Ceremony at Riverside Park, Canmore",
         title: "Ceremony",
@@ -35,8 +37,8 @@ const EVENTS = [
         note: null,
       },
       {
-        dot: "bg-terracotta",
-        ring: "ring-terracotta/30",
+        accentBg: "bg-terracotta",
+        timeColor: "text-terracotta",
         image: "/illustrations/reception.png",
         alt: "Reception at A Bear and Bison Inn",
         title: "Reception",
@@ -51,71 +53,62 @@ const EVENTS = [
 
 export default function Schedule() {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-16">
+    <div className="max-w-2xl mx-auto px-6 py-16 flex flex-col gap-12">
 
-      {/* ── Header ── */}
-      <div className="text-center mb-20">
-        <p className="font-handwritten text-3xl text-sage mb-2">welcome to our</p>
-        <h1 className="font-serif text-6xl md:text-7xl text-brown font-semibold leading-tight mb-3">
+      {/* Header */}
+      <div className="text-center">
+        <p className="font-handwritten text-sage text-3xl mb-2">welcome to our</p>
+        <h1 className="font-serif text-5xl md:text-7xl text-brown font-semibold leading-tight mb-3">
           Wedding Weekend
         </h1>
-        <p className="font-handwritten text-3xl text-sage mb-3">we can&apos;t wait to celebrate with you!</p>
-        <div className="flex items-center justify-center gap-3 mt-4">
+        <p className="font-handwritten text-3xl text-sage">we can&apos;t wait to celebrate with you!</p>
+        <div className="flex items-center justify-center gap-3 mt-6">
           <div className="h-px w-16 bg-sage-light/50" />
           <span className="font-handwritten text-sage text-xl">✦</span>
           <div className="h-px w-16 bg-sage-light/50" />
         </div>
       </div>
 
-      {/* ── Timeline ── */}
-      <div className="relative">
+      {/* Days */}
+      {DAYS.map((daySection, dayIdx) => (
+        <div key={daySection.day}>
 
-        {/* Vertical spine */}
-        <div className="absolute left-[11px] top-0 bottom-0 w-0.5 bg-sage-light/40" />
+          {/* Wildflower divider between days */}
+          {dayIdx > 0 && (
+            <div className="flex items-center gap-4 mb-12">
+              <div className="flex-1 h-px bg-beige-dark" />
+              <span className="font-handwritten text-sage-light text-3xl leading-none">✿</span>
+              <div className="flex-1 h-px bg-beige-dark" />
+            </div>
+          )}
 
-        {EVENTS.map(({ day, date, events }, sectionIdx) => (
-          <div key={day} className="mb-4">
+          <div className="flex flex-col gap-5">
 
-            {/* Divider between days */}
-            {sectionIdx > 0 && (
-              <div className="flex items-center gap-4 mb-10 pl-8">
-                <div className="flex-1 h-px bg-beige-dark" />
-              </div>
-            )}
-
-            {/* Day label */}
-            <div className="flex items-center gap-5 mb-8 pl-8">
-              <div>
-                <p className="font-handwritten text-sage text-3xl leading-none">{day}</p>
-                <p className="font-sans text-xs tracking-[0.2em] uppercase text-brown-light mt-0.5">{date}</p>
-              </div>
+            {/* Day header */}
+            <div>
+              <h2 className={`font-handwritten text-3xl ${daySection.accentColor}`}>{daySection.day}</h2>
+              <p className="font-sans text-xs tracking-[0.2em] uppercase text-brown-light mt-0.5">{daySection.date}</p>
             </div>
 
-            {/* Events */}
-            {events.map((evt, i) => (
-              <div key={evt.title} className="flex gap-5 mb-2">
+            {/* Event cards */}
+            {daySection.events.map((evt) => (
+              <div key={evt.title} className="bg-white rounded-2xl shadow-sm overflow-hidden">
 
-                {/* Dot + connector */}
-                <div className="flex flex-col items-center shrink-0">
-                  <div className={`relative z-10 w-6 h-6 rounded-full ${evt.dot} ring-4 ${evt.ring} shadow-md shrink-0`} />
-                  {i < events.length - 1 && (
-                    <div className="w-0.5 flex-1 bg-sage-light/40 mt-1" />
-                  )}
-                </div>
-
-                {/* Event card */}
-                <div className="flex flex-col sm:flex-row gap-5 flex-1 pb-12">
-                  <Image
-                    src={evt.image}
-                    alt={evt.alt}
-                    width={300}
-                    height={225}
-                    className="object-contain w-full sm:w-[300px] h-auto"
-                    loading="eager"
-                  />
-                  <div className="flex-1 pt-1">
-                    <h2 className="font-serif text-3xl text-brown mb-1">{evt.title}</h2>
-                    <p className="font-handwritten text-sage text-2xl mb-2">{evt.time}</p>
+                {/* Card body */}
+                <div className="flex flex-col sm:flex-row">
+                  <div className="flex items-center justify-center p-4 sm:w-[320px] sm:shrink-0 sm:border-r sm:border-beige-dark">
+                    <Image
+                      src={evt.image}
+                      alt={evt.alt}
+                      width={360}
+                      height={270}
+                      className="object-contain w-full"
+                      loading="eager"
+                    />
+                  </div>
+                  <div className="flex-1 px-6 pb-6 pt-2 sm:pt-6">
+                    <h3 className="font-serif text-2xl text-brown mb-1">{evt.title}</h3>
+                    <p className={`font-handwritten text-2xl ${evt.timeColor} mb-2`}>{evt.time}</p>
                     {evt.locationHref ? (
                       <Link
                         href={evt.locationHref}
@@ -141,12 +134,11 @@ export default function Schedule() {
             ))}
 
           </div>
-        ))}
+        </div>
+      ))}
 
-      </div>
-
-      {/* ── Stick Around section ── */}
-      <div className="mt-8 pt-12 border-t border-beige-dark">
+      {/* Stick Around */}
+      <div className="pt-10 border-t border-beige-dark">
         <p className="font-handwritten text-sage text-3xl mb-4">Stick around?</p>
         <div className="flex flex-col gap-4 font-sans text-brown leading-relaxed">
           <p>

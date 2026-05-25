@@ -1039,7 +1039,7 @@ export default function RSVP() {
                           <p className="text-xs tracking-widest uppercase text-brown-light">
                             Contact info <span className="normal-case">(so we can reach you)</span>
                           </p>
-                          <div className="flex gap-4">
+                          <div className="flex flex-col sm:flex-row gap-4">
                             <div className="flex flex-col gap-1.5 flex-1">
                               <label className="text-xs text-brown-light">Email</label>
                               <input
