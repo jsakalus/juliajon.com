@@ -96,7 +96,7 @@ Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API
 
 | Button | Trigger | Animation | Sound |
 |---|---|---|---|
-| Yes, I'll be there | Click | `peanut-nav.png` grows from tiny → large as it runs diagonally top-left → bottom-right over 2s | None |
+| Yes, I'll be there | Click | 70-particle canvas confetti burst erupts from button center; site palette colors (sage, gold, mauve, lavender, terracotta); fades over ~2s | None |
 | Maybe | Click | `Maybe.png` boings out from center of screen (springy scale keyframe) | Deep wompey boing — triangle wave 310Hz → 68Hz with 150ms delay |
 | Regretfully, no | Hover | `Regretfully no.png` appears small to the right of the button | None |
 | Yes (welcome dinner) | Click | `Yes dinner.png` slides in from right, holds, slides back — pinned to bottom of screen | None |
@@ -432,6 +432,7 @@ alter table guests alter column last_name drop not null;
 
 ## Nice-to-Have Features (Phase 4+)
 
+- [ ] Travel page rental car coordination — allow guests to enter their arrival date/time so they can find others to split a rental car with
 - [ ] Email guests via Resend or SendGrid
 - [ ] Text guests via Twilio (SMS)
 - [ ] RSVP reminder automation

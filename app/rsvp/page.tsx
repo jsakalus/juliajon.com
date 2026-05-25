@@ -175,13 +175,27 @@ export default function RSVP() {
   const [bloomFlowers, setBloomFlowers] = useState<string[]>([]);
   const [gardenVisible, setGardenVisible] = useState(false);
   const [showMaybePop, setShowMaybePop] = useState(false);
-  const [showYesRun, setShowYesRun] = useState(false);
   const [showYesDinner, setShowYesDinner] = useState(false);
   const [showPartySlide, setShowPartySlide] = useState(false);
   const [showAirplane, setShowAirplane] = useState(false);
   const [showVan, setShowVan] = useState(false);
   const [showPleasePeanut, setShowPleasePeanut] = useState(false);
   const snoreCtxRef = useRef<AudioContext | null>(null);
+  const snoreTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const confettiCanvasRef = useRef<HTMLCanvasElement>(null);
+  const confettiAnimRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => { if (confettiAnimRef.current) cancelAnimationFrame(confettiAnimRef.current); };
+  }, []);
+
+  useEffect(() => {
+    ["/peanut/Maybe.png", "/peanut/Party.png", "/peanut/Yes dinner.png",
+     "/peanut/Regretfully no.png", "/peanut/Slip out early.png",
+     "/peanut/Please.png", "/peanut/peanut-celebrate.png"].forEach((src) => {
+      const img = new window.Image(); img.src = src;
+    });
+  }, []);
 
   useEffect(() => {
     fetch("/api/rsvp/count", { cache: "no-store" })
@@ -215,10 +229,73 @@ export default function RSVP() {
     }
   };
 
-  const handleYesClick = (memberId: string) => {
-    updateResponse(memberId, "wedding_attending_status", "yes");
-    setShowYesRun(true);
-    setTimeout(() => setShowYesRun(false), 2100);
+  const launchConfetti = (originX: number, originY: number) => {
+    const canvas = confettiCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ["#8fa888", "#c4a882", "#d4736a", "#9b7ebd", "#d4a847", "#c4808a", "#ffffff"];
+
+    type Particle = { x: number; y: number; vx: number; vy: number; color: string; w: number; h: number; rotation: number; rotSpeed: number; shape: "rect" | "circle" };
+    const particles: Particle[] = [];
+
+    for (let i = 0; i < 70; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 5 + Math.random() * 10;
+      particles.push({
+        x: originX, y: originY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 8,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        w: 6 + Math.random() * 10,
+        h: 4 + Math.random() * 6,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.25,
+        shape: Math.random() < 0.3 ? "circle" : "rect",
+      });
+    }
+
+    const totalFrames = 100;
+    let frame = 0;
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      frame++;
+      if (frame > totalFrames) return;
+      const alpha = Math.max(0, 1 - frame / totalFrames);
+      particles.forEach((p) => {
+        p.vy += 0.4;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+        p.vx *= 0.99;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillStyle = p.color;
+        if (p.shape === "circle") {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        }
+        ctx.restore();
+      });
+      confettiAnimRef.current = requestAnimationFrame(animate);
+    };
+
+    if (confettiAnimRef.current) cancelAnimationFrame(confettiAnimRef.current);
+    confettiAnimRef.current = requestAnimationFrame(animate);
+  };
+
+  const handleYesClick = (el: HTMLElement) => {
+    const rect = el.getBoundingClientRect();
+    launchConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
   };
 
   const playAirplaneSound = () => {
@@ -344,13 +421,14 @@ export default function RSVP() {
       lfo.start();
       noise.start();
     } catch { /* audio not supported */ }
+
+    if (snoreTimeoutRef.current) clearTimeout(snoreTimeoutRef.current);
+    snoreTimeoutRef.current = setTimeout(stopSnore, 3000);
   };
 
   const stopSnore = () => {
-    if (snoreCtxRef.current) {
-      snoreCtxRef.current.close().catch(() => {});
-      snoreCtxRef.current = null;
-    }
+    if (snoreTimeoutRef.current) { clearTimeout(snoreTimeoutRef.current); snoreTimeoutRef.current = null; }
+    if (snoreCtxRef.current) { snoreCtxRef.current.close().catch(() => {}); snoreCtxRef.current = null; }
   };
 
   const handlePartyClick = (memberId: string) => {
@@ -482,7 +560,6 @@ export default function RSVP() {
     }));
     setSubmitting(false);
     setSubmitted(true);
-    setShowPeanut(true);
 
     // Save the searched guest's ID + name so the registry page can attribute contributions
     const searchedGuest = result?.members[0];
@@ -497,8 +574,15 @@ export default function RSVP() {
       setTimeout(() => setBloomFading(true), 3200);
       setTimeout(() => setGardenVisible(true), 3800);
       setTimeout(() => { setBlooming(false); setBloomFading(false); }, 4200);
+      // On mobile, wait for bloom to finish before showing Peanut
+      if (window.innerWidth < 640) {
+        setTimeout(() => setShowPeanut(true), 4500);
+      } else {
+        setShowPeanut(true);
+      }
     } else {
       setGardenVisible(true);
+      setShowPeanut(true);
     }
   };
 
@@ -565,17 +649,7 @@ export default function RSVP() {
     <>
       {showPeanut && <PeanutCelebration onDismiss={() => setShowPeanut(false)} />}
 
-      {showYesRun && (
-        <div className="fixed pointer-events-none z-50" style={{ top: -20, left: -20 }}>
-          <Image
-            src="/peanut/Yes wedding.png"
-            alt=""
-            width={140}
-            height={140}
-            style={{ animation: "yes-run 2s linear forwards" }}
-          />
-        </div>
-      )}
+      <canvas ref={confettiCanvasRef} className="fixed inset-0 pointer-events-none z-50" style={{ width: "100vw", height: "100vh" }} />
 
       {showAirplane && (
         <div className="fixed bottom-0 left-0 pointer-events-none z-50 text-6xl"
@@ -693,7 +767,7 @@ export default function RSVP() {
 
           {/* ── Search form ── */}
           <form onSubmit={handleSearch} className="bg-white rounded-3xl shadow-sm p-8 relative mb-8">
-            <div className="flex gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="flex flex-col gap-1.5 flex-1">
                 <label className="text-xs tracking-widest uppercase text-brown-light">First Name</label>
                 <div className="relative">
@@ -780,13 +854,18 @@ export default function RSVP() {
                             <span className="normal-case font-normal not-italic">(Saturday, May 29, 2027)</span>
                           </p>
                           <div className="flex gap-3 flex-wrap">
-                            <StatusButton
-                              current={r?.wedding_attending_status ?? null}
-                              value="yes"
-                              label="Yes, I'll be there"
-                              activeClass="bg-sage text-white border-sage"
-                              onClick={() => handleYesClick(member.id)}
-                            />
+                            <div
+                              className="inline-flex"
+                              onClick={(e) => handleYesClick(e.currentTarget as HTMLElement)}
+                            >
+                              <StatusButton
+                                current={r?.wedding_attending_status ?? null}
+                                value="yes"
+                                label="Yes, I'll be there"
+                                activeClass="bg-sage text-white border-sage"
+                                onClick={() => updateResponse(member.id, "wedding_attending_status", "yes")}
+                              />
+                            </div>
                             <StatusButton
                               current={r?.wedding_attending_status ?? null}
                               value="maybe"
