@@ -100,7 +100,7 @@ If any of these change, update **all** locations listed.
 - ✓ Peanut rain animation plays on first visit per browser session
 - [ ] Add photos and fun elements (optional, can add later)
 
-#### Gamification ← IN PROGRESS
+#### Gamification ← COMPLETE
 
 **Philosophy**: Playful Peanut (the dog) reactions scattered throughout the site — no libraries, all Web Audio API (synthesized sounds, no files) and CSS keyframe animations.
 
@@ -142,11 +142,6 @@ Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API
 
 **Still to do / ideas:**
 - [ ] More Peanut reactions on other pages (Registry, etc.)
-
-#### Our Story (`/our-story`) ← NOT STARTED
-- [ ] Create page with Julia & Jonathan's story
-- [ ] Content TBD — how they met, the proposal, etc.
-- [ ] Add to nav once content is ready
 
 #### Schedule (`/schedule`) ← MOSTLY COMPLETE
 - ✓ Page redesigned (second pass): removed vertical spine timeline; now uses white rounded cards (`bg-white rounded-2xl shadow-sm`) matching FAQ/Travel aesthetic
@@ -217,7 +212,8 @@ Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API
 - ✓ All modals: clicking the backdrop closes the modal (backdrop `onClick={closeModal}`, inner div stops propagation).
 - ✓ Item availability text: shows `qty/max purchased` counter (e.g. "4/5 purchased") on both grid tiles and view-item modal.
 - ✓ Item tiles: "View →" button restored on tiles for items with an external URL; click goes directly to site without opening the modal (stopPropagation). Tapping elsewhere on the card still opens the detail modal.
-- [ ] Content review with Julia & Jon to finalize items, descriptions, and external URLs
+- ✓ External URLs added for all registry items and funds
+- [ ] Content review with Julia & Jon to finalize items, descriptions
 - [ ] Minor UX tweaks
 
 **SQL to populate registry_items** (run in Supabase SQL editor):
@@ -517,5 +513,4 @@ alter table guests alter column last_name drop not null;
 - [ ] Last names needed for all single-name guests (for RSVP name search)
 - [ ] Finalize welcome dinner invite list
 - [ ] Any inspiration sites or mood board for design?
-- [ ] External URLs / contribution links for fund items (Honeymoon, House, Skydiving, Bike funds)
 - [ ] Goal amount for Skydiving Fund (currently null)

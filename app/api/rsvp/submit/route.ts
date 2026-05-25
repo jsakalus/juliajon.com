@@ -127,15 +127,19 @@ async function sendRsvpEmails(
     allMailedResponses = mailedResponses ?? [];
   }
 
-  // When no invites have been mailed yet, fall back to this submission's data
-  // so the tally reflects what was just submitted rather than showing all zeros.
-  const tallySource = mailedGuestIds.length > 0
-    ? allMailedResponses
-    : allResponses.filter((r) => processedGuestIds.includes(r.guest_id));
+  // When no invites have been mailed yet, fall back to all responses in the DB
+  // so the tally reflects everyone who has responded, not just the current submission.
+  let tallySource = allMailedResponses;
+  if (mailedGuestIds.length === 0) {
+    const { data: allDbResponses } = await getSupabase()
+      .from("rsvp_responses")
+      .select("wedding_attending_status, welcome_dinner_status, staying_late");
+    tallySource = allDbResponses ?? [];
+  }
 
   const stats: RsvpStats = {
     totalMailedCount:     mailedGuestIds.length,
-    respondedMailedCount: mailedGuestIds.length > 0 ? allMailedResponses.length : tallySource.length,
+    respondedMailedCount: tallySource.length,
     yesWedding:   tallySource.filter((r) => r.wedding_attending_status === "yes").length,
     maybeWedding: tallySource.filter((r) => r.wedding_attending_status === "maybe").length,
     noWedding:    tallySource.filter((r) => r.wedding_attending_status === "no").length,
@@ -160,12 +164,8 @@ async function sendRsvpEmails(
     })
     .filter((x): x is GuestWithResponse => x !== null);
 
-  // One confirmation email per guest who has an email address on file
-  await Promise.allSettled(
-    guestsWithResponses.map(({ guest, response }) =>
-      sendGuestConfirmation(guest, response, party.invited_to_welcome_dinner ?? false)
-    )
-  );
+  // One confirmation email per party (addressed to all members with emails)
+  await sendGuestConfirmation(guestsWithResponses, party.invited_to_welcome_dinner ?? false);
 
   // One admin notification for the whole party submission
   await sendAdminNotification(
