@@ -91,18 +91,42 @@ function BoolButton({ current, value, label, activeClass, onClick }: BoolButtonP
 
 const BLOOMED_FLOWERS = ["🌸", "🌼", "🌻", "🌷", "🌺"];
 
+function Flower({ emoji, name, style }: { emoji: string; name?: string; style?: React.CSSProperties }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span
+      className="text-2xl inline-block relative cursor-default select-none"
+      style={style}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+      onClick={() => setShow((v) => !v)}
+    >
+      {emoji}
+      {show && name && (
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 text-xs bg-brown text-white rounded whitespace-nowrap pointer-events-none z-10 font-sans">
+          {name}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function FlowerGarden({
   responded,
   newlyBloomed,
   maybe,
   newlySprouted,
   showThankYou = true,
+  yesNames = [],
+  maybeNames = [],
 }: {
   responded: number;
   newlyBloomed: number;
   maybe: number;
   newlySprouted: number;
   showThankYou?: boolean;
+  yesNames?: string[];
+  maybeNames?: string[];
 }) {
   if (responded === 0 && maybe === 0) return null;
 
@@ -114,37 +138,34 @@ function FlowerGarden({
       <div className="flex flex-wrap justify-center gap-2 max-w-sm mx-auto">
         {Array.from({ length: responded }).map((_, i) => {
           const isNew = newlyBloomed > 0 && i >= responded - newlyBloomed;
-          const emoji = BLOOMED_FLOWERS[i % BLOOMED_FLOWERS.length];
           return (
-            <span
+            <Flower
               key={`flower-${i}`}
-              className="text-2xl inline-block"
+              emoji={BLOOMED_FLOWERS[i % BLOOMED_FLOWERS.length]}
+              name={yesNames[i]}
               style={{
                 animation: "flower-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
                 animationDelay: isNew
                   ? `${(i - (responded - newlyBloomed)) * 0.12}s`
                   : `${i * 0.025}s`,
               }}
-            >
-              {emoji}
-            </span>
+            />
           );
         })}
         {Array.from({ length: maybe }).map((_, i) => {
           const isNew = newlySprouted > 0 && i >= maybe - newlySprouted;
           return (
-            <span
+            <Flower
               key={`seedling-${i}`}
-              className="text-2xl inline-block"
+              emoji="🌱"
+              name={maybeNames[i]}
               style={{
                 animation: "flower-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
                 animationDelay: isNew
                   ? `${(i - (maybe - newlySprouted)) * 0.12}s`
                   : `${(responded + i) * 0.025}s`,
               }}
-            >
-              🌱
-            </span>
+            />
           );
         })}
       </div>
@@ -168,6 +189,7 @@ export default function RSVP() {
   const [submitted, setSubmitted] = useState(false);
   const [showPeanut, setShowPeanut] = useState(false);
   const [gardenCount, setGardenCount] = useState({ responded: 0, maybe: 0, total: 0 });
+  const [gardenNames, setGardenNames] = useState<{ yesNames: string[]; maybeNames: string[] }>({ yesNames: [], maybeNames: [] });
   const [newlyBloomed, setNewlyBloomed] = useState(0);
   const [newlySprouted, setNewlySprouted] = useState(0);
   const [blooming, setBlooming] = useState(false);
@@ -200,7 +222,10 @@ export default function RSVP() {
   useEffect(() => {
     fetch("/api/rsvp/count", { cache: "no-store" })
       .then((r) => r.json())
-      .then(setGardenCount)
+      .then((data) => {
+        setGardenCount(data);
+        setGardenNames({ yesNames: data.yesNames ?? [], maybeNames: data.maybeNames ?? [] });
+      })
       .catch(() => {});
   }, []);
 
@@ -558,6 +583,22 @@ export default function RSVP() {
       responded: prev.responded + yesCount - downgradedToMaybe.length,
       maybe: prev.maybe + allNewSeedlings - upgradedFromMaybe.length,
     }));
+    setGardenNames((prev) => {
+      const getName = (m: typeof members[0]) =>
+        [m.first_name, m.last_name].filter((p): p is string => !!p).map((p) => p[0].toUpperCase() + ".").join("");
+      let yesNames = [...prev.yesNames];
+      let maybeNames = [...prev.maybeNames];
+      for (const m of members) {
+        const name = getName(m);
+        const newStatus = responses[m.id]?.wedding_attending_status;
+        const prevStatus = result?.existingResponses?.find((e) => e.guest_id === m.id)?.wedding_attending_status;
+        if (prevStatus === "yes") yesNames = yesNames.filter((n) => n !== name);
+        if (prevStatus === "maybe") maybeNames = maybeNames.filter((n) => n !== name);
+        if (newStatus === "yes") yesNames.push(name);
+        if (newStatus === "maybe") maybeNames.push(name);
+      }
+      return { yesNames, maybeNames };
+    });
     setSubmitting(false);
     setSubmitted(true);
 
@@ -591,6 +632,8 @@ export default function RSVP() {
     newlyBloomed,
     maybe: gardenCount.maybe,
     newlySprouted,
+    yesNames: gardenNames.yesNames,
+    maybeNames: gardenNames.maybeNames,
   };
   const garden = <FlowerGarden {...gardenProps} />;
   const gardenPostSubmit = <FlowerGarden {...gardenProps} showThankYou={false} />;
@@ -906,7 +949,7 @@ export default function RSVP() {
                         {r?.wedding_attending_status === "maybe" && (
                           <div className="flex flex-col gap-1.5">
                             <p className="text-sm text-brown-light leading-relaxed bg-beige rounded-lg px-4 py-3">
-                              We understand if you can&apos;t commit right away — as the day draws nearer we&apos;ll send you periodic reminders. We would love for you to come, but if you&apos;re unsure, please please please let us know ahead of time. Our venue is very small, and we were only able to invite a small number of people — which means we couldn&apos;t invite all our favorite people at once. To prevent last-minute cancellations and allow more of our friends a chance to come, please let us know with ample notice.
+                              We understand if you can&apos;t commit right away, and we&apos;ll send a few gentle reminders as the date gets closer. We would absolutely love to celebrate with you, but if your plans are uncertain, we would really appreciate as much notice as possible. Our venue is quite small, so we had to keep the guest list limited, and early updates help us make space for others we wish we could include.
                             </p>
                             <label className="text-xs tracking-widest uppercase text-brown-light">
                               Anything you&apos;d like us to know? <span className="normal-case">(optional)</span>
