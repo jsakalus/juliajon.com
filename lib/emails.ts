@@ -187,7 +187,7 @@ export function guestConfirmationHtml(
             <td style="background-color:#578C6C;border-radius:8px 8px 0 0;padding:28px 24px 20px;text-align:center;">
               <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:2.5px;color:rgba(255,255,255,0.65);font-family:Arial,Helvetica,sans-serif;">Julia &amp; Jonathan</p>
               <p style="margin:10px 0 0;font-size:28px;color:#ffffff;font-family:Georgia,'Times New Roman',serif;">✿ &nbsp; May 29, 2027 &nbsp; ✿</p>
-              <p style="margin:6px 0 0;font-size:12px;color:rgba(255,255,255,0.75);font-family:Arial,Helvetica,sans-serif;">are getting married in Canmore, Alberta</p>
+              ${!isMaybe ? `<p style="margin:6px 0 0;font-size:12px;color:rgba(255,255,255,0.75);font-family:Arial,Helvetica,sans-serif;">are getting married in Canmore, Alberta</p>` : ""}
               <p style="margin:18px auto 0;border-top:1px solid rgba(255,255,255,0.25);width:80%;font-size:0;line-height:0;">&nbsp;</p>
               <p style="margin:14px 0 0;font-size:14px;font-style:italic;color:#ffffff;font-family:Georgia,'Times New Roman',serif;">${statusText}</p>
             </td>
@@ -210,13 +210,11 @@ export function guestConfirmationHtml(
                 <tr>
                   <td>
                     <p style="margin:0;font-size:16px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">Hi ${esc(guest.first_name)},</p>
-                    <p style="margin:8px 0 0;font-size:15px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">${
+                    ${!isMaybe ? `<p style="margin:8px 0 0;font-size:15px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">${
                       isYes
                         ? "We are SO thrilled you can make it! Here is what we have on file for you."
-                        : isMaybe
-                        ? "Fingers crossed you can make it work! Here is what we have on file."
                         : "Here is a confirmation of your RSVP. You will be dearly missed."
-                    }</p>
+                    }</p>` : ""}
                   </td>
                 </tr>
 
@@ -248,7 +246,10 @@ export function guestConfirmationHtml(
                         ? "We hope the stars align and we get to see you there."
                         : "Thank you for letting us know."
                     }</p>
-                    <p style="margin:6px 0 0;font-size:15px;color:#2C2018;font-family:Georgia,'Times New Roman',serif;">With love, Julia and Jonathan</p>
+                    ${isMaybe
+                      ? `<p style="margin:12px 0 0;font-size:15px;color:#2C2018;font-family:Georgia,'Times New Roman',serif;">Julia &amp; Jonathan</p>`
+                      : `<p style="margin:6px 0 0;font-size:15px;color:#2C2018;font-family:Georgia,'Times New Roman',serif;">With love, Julia and Jonathan</p>`
+                    }
                     ${isYes ? `<p style="margin:16px 0 0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">P.S. Peanut has been informed and is equally excited.</p>` : ""}
                   </td>
                 </tr>
