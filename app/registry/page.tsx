@@ -351,21 +351,21 @@ export default function Registry() {
 
     if (modal.mode === "contribute") {
       modalContent = (
-        <div className="flex flex-col sm:flex-row">
-          {/* Photo — full width on mobile, left column on desktop */}
+        <div className="flex flex-col sm:flex-row gap-6">
+          {/* Photo — 4:3 on mobile, 3:4 portrait on desktop */}
           {modal.item.image_url && (
             // eslint-disable-next-line @next/next/no-img-element
-            <div className="sm:w-52 sm:shrink-0">
+            <div className="sm:w-56 sm:shrink-0">
               <img
                 src={modal.item.image_url}
                 alt={modal.item.name}
-                className="w-full h-52 sm:h-full object-cover"
+                className="w-full aspect-[4/3] sm:aspect-[3/4] object-cover rounded-xl"
               />
             </div>
           )}
 
           {/* Content */}
-          <div className="flex flex-col gap-4 p-6 flex-1">
+          <div className="flex flex-col gap-4 flex-1">
             <div className="flex flex-col gap-1">
               <p className="font-serif italic text-xl text-brown">{modal.item.name}</p>
               {modal.item.description && (
@@ -379,19 +379,17 @@ export default function Registry() {
                 <p className="text-xs tracking-widest uppercase text-brown-light">Step 1</p>
                 <p className="text-sm font-semibold text-brown">Send your contribution to</p>
               </div>
-              <div className="flex flex-col gap-2 text-sm text-brown">
-                <div className="flex justify-between">
-                  <span className="text-brown-light">Venmo</span>
-                  <span className="font-medium">{PAYMENT_METHODS.juliaVenmo}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-brown-light">PayPal</span>
-                  <span className="font-medium">{PAYMENT_METHODS.juliaPaypal}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-brown-light">e-Transfer</span>
-                  <span className="font-medium">{PAYMENT_METHODS.jonathanEtransfer}</span>
-                </div>
+              <div className="flex flex-col gap-3 text-sm text-brown">
+                {[
+                  { label: "Venmo", value: PAYMENT_METHODS.juliaVenmo },
+                  { label: "PayPal", value: PAYMENT_METHODS.juliaPaypal },
+                  { label: "e-Transfer", value: PAYMENT_METHODS.jonathanEtransfer },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex flex-col gap-0.5">
+                    <span className="text-xs text-brown-light">{label}</span>
+                    <span className="font-medium break-all">{value}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -560,7 +558,7 @@ export default function Registry() {
           <div
             className={`bg-white rounded-2xl w-full shadow-xl max-h-[90vh] overflow-y-auto ${
               modal.mode === "contribute"
-                ? "max-w-lg"
+                ? "p-6 max-w-2xl"
                 : `flex flex-col gap-6 ${modal.mode === "view-item" ? "p-6 max-w-md" : "p-8 max-w-sm"}`
             }`}
             onClick={(e) => e.stopPropagation()}
