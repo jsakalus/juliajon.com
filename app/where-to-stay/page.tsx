@@ -2,7 +2,7 @@ type Hotel = {
   name: string;
   url: string;
   description: string;
-  ceremonyDrive: string;
+  ceremonyDrive?: string;
   ceremonyWalk?: string;
   receptionDrive: string;
 };
@@ -24,8 +24,7 @@ const tiers: Tier[] = [
         url: "https://thecanmorehotel.com/rooms-suites/",
         description:
           "A solid option right in the heart of downtown Canmore. Easy on the wallet and easy to get around from.",
-        ceremonyDrive: "~5 min drive",
-        ceremonyWalk: "~10 min walk",
+        ceremonyWalk: "~8 min walk",
         receptionDrive: "~7 min drive",
       },
     ],
@@ -41,17 +40,16 @@ const tiers: Tier[] = [
         url: "https://www.mountainviewinn.ca/",
         description:
           "A comfortable inn with great mountain views. Slightly outside of downtown but a quick drive to everything.",
-        ceremonyDrive: "~8 min drive",
-        receptionDrive: "~12 min drive",
+        ceremonyDrive: "~6 min drive",
+        receptionDrive: "~5 min drive",
       },
       {
         name: "Georgetown Inn",
         url: "https://www.georgetowninn.ca/",
         description:
           "A charming boutique inn right in the heart of downtown Canmore. Lots of character, great location, and a short hop to both venues.",
-        ceremonyDrive: "~5 min drive",
-        ceremonyWalk: "~12 min walk",
-        receptionDrive: "~7 min drive",
+        ceremonyDrive: "~6 min drive",
+        receptionDrive: "~4 min drive",
       },
     ],
   },
@@ -65,8 +63,8 @@ const tiers: Tier[] = [
         description:
           "A stunning full-service luxury hotel in the Spring Creek neighbourhood. If you want to make a romantic trip of it, this is the place.",
         ceremonyDrive: "~5 min drive",
-        ceremonyWalk: "~10 min walk",
-        receptionDrive: "~7 min drive",
+        ceremonyWalk: "~18 min walk",
+        receptionDrive: "~6 min drive",
       },
     ],
   },
@@ -136,8 +134,7 @@ export default function WhereToStay() {
                           Ceremony
                         </p>
                         <p className="text-brown-light mt-0.5">
-                          {hotel.ceremonyDrive}
-                          {hotel.ceremonyWalk && <> &middot; {hotel.ceremonyWalk}</>}
+                          {[hotel.ceremonyDrive, hotel.ceremonyWalk].filter(Boolean).join(" · ")}
                         </p>
                       </div>
                       <div>
