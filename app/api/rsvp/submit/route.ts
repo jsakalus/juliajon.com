@@ -118,12 +118,14 @@ async function sendRsvpEmails(
 
   const mailedGuestIds = (mailedGuests ?? []).map((g) => g.id);
 
-  const { data: mailedResponses } = await getSupabase()
-    .from("rsvp_responses")
-    .select("wedding_attending_status, welcome_dinner_status, staying_late")
-    .in("guest_id", mailedGuestIds);
-
-  const allMailedResponses = mailedResponses ?? [];
+  let allMailedResponses: { wedding_attending_status: string | null; welcome_dinner_status: string | null; staying_late: boolean | null }[] = [];
+  if (mailedGuestIds.length > 0) {
+    const { data: mailedResponses } = await getSupabase()
+      .from("rsvp_responses")
+      .select("wedding_attending_status, welcome_dinner_status, staying_late")
+      .in("guest_id", mailedGuestIds);
+    allMailedResponses = mailedResponses ?? [];
+  }
 
   const stats: RsvpStats = {
     totalMailedCount:     mailedGuestIds.length,

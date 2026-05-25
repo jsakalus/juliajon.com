@@ -343,7 +343,7 @@ export function adminNotificationHtml(
     })
     .join("");
 
-  const pending = totalMailedCount - respondedMailedCount;
+  const pending = Math.max(0, totalMailedCount - respondedMailedCount);
   const headerLabel = anyChanged ? "RSVP Changed" : "New RSVP";
 
   return `<!DOCTYPE html>
@@ -417,7 +417,11 @@ export function adminNotificationHtml(
           <!-- Pending count -->
           <tr>
             <td style="background-color:#ffffff;padding:12px 16px;border-radius:0 0 8px 8px;">
-              <p style="margin:0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">${respondedMailedCount} of ${totalMailedCount} invited guests have responded. ${pending} still pending.</p>
+              <p style="margin:0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">${
+                totalMailedCount > 0
+                  ? `${respondedMailedCount} of ${totalMailedCount} invited guests have responded. ${pending} still pending.`
+                  : `No invitations have been mailed yet.`
+              }</p>
             </td>
           </tr>
 
