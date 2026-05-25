@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
+import { sendGuestConfirmation, sendAdminNotification } from "@/lib/emails";
+import type { GuestInfo, GuestWithResponse, RsvpStats } from "@/lib/emails";
 
 export async function POST(request: NextRequest) {
   const { responses } = await request.json();
@@ -8,17 +10,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  for (const response of responses) {
-    // Don't allow changing a "no" response
-    const { data: existing } = await getSupabase()
-      .from("rsvp_responses")
-      .select("wedding_attending_status")
-      .eq("guest_id", response.guest_id)
-      .maybeSingle();
+  const guestIds: string[] = responses.map((r: any) => r.guest_id);
 
-    if (existing?.wedding_attending_status === "no") {
-      continue;
-    }
+  // Batch-fetch all existing responses upfront for change detection + "no" lock
+  const { data: existingRows } = await getSupabase()
+    .from("rsvp_responses")
+    .select("guest_id, wedding_attending_status")
+    .in("guest_id", guestIds);
+
+  const previousStatusMap = new Map<string, string>(
+    (existingRows ?? []).map((r) => [r.guest_id, r.wedding_attending_status])
+  );
+
+  const processedGuestIds: string[] = [];
+
+  for (const response of responses) {
+    const previousStatus = previousStatusMap.get(response.guest_id) ?? null;
+
+    // Locked: once a guest declines, no further changes allowed
+    if (previousStatus === "no") continue;
 
     const status = response.wedding_attending_status as "yes" | "no" | "maybe" | null;
 
@@ -56,7 +66,104 @@ export async function POST(request: NextRequest) {
     if (Object.keys(guestUpdates).length > 0) {
       await getSupabase().from("guests").update(guestUpdates).eq("id", response.guest_id);
     }
+
+    processedGuestIds.push(response.guest_id);
+  }
+
+  // Send emails after all upserts succeed. Errors are logged but never fail the RSVP.
+  if (processedGuestIds.length > 0) {
+    sendRsvpEmails(responses, processedGuestIds, previousStatusMap).catch((err) =>
+      console.error("Email send failed:", err)
+    );
   }
 
   return NextResponse.json({ success: true });
+}
+
+async function sendRsvpEmails(
+  allResponses: any[],
+  processedGuestIds: string[],
+  previousStatusMap: Map<string, string>
+) {
+  // Fetch guest details (name + email)
+  const { data: guests } = await getSupabase()
+    .from("guests")
+    .select("id, first_name, last_name, email, party_id")
+    .in("id", processedGuestIds);
+
+  if (!guests?.length) return;
+
+  // Fetch party details (name + welcome dinner flag)
+  const partyId = guests[0].party_id;
+  const { data: party } = await getSupabase()
+    .from("parties")
+    .select("name, invited_to_welcome_dinner")
+    .eq("id", partyId)
+    .single();
+
+  if (!party) return;
+
+  // Fetch stats scoped to invite_mailed parties only
+  const { data: mailedParties } = await getSupabase()
+    .from("parties")
+    .select("id")
+    .eq("invite_mailed", true);
+
+  const mailedPartyIds = (mailedParties ?? []).map((p) => p.id);
+
+  const { data: mailedGuests } = await getSupabase()
+    .from("guests")
+    .select("id")
+    .in("party_id", mailedPartyIds);
+
+  const mailedGuestIds = (mailedGuests ?? []).map((g) => g.id);
+
+  const { data: mailedResponses } = await getSupabase()
+    .from("rsvp_responses")
+    .select("wedding_attending_status, welcome_dinner_status, staying_late")
+    .in("guest_id", mailedGuestIds);
+
+  const allMailedResponses = mailedResponses ?? [];
+
+  const stats: RsvpStats = {
+    totalMailedCount:     mailedGuestIds.length,
+    respondedMailedCount: allMailedResponses.length,
+    yesWedding:   allMailedResponses.filter((r) => r.wedding_attending_status === "yes").length,
+    maybeWedding: allMailedResponses.filter((r) => r.wedding_attending_status === "maybe").length,
+    noWedding:    allMailedResponses.filter((r) => r.wedding_attending_status === "no").length,
+    yesDinner:    allMailedResponses.filter((r) => r.welcome_dinner_status === "yes").length,
+    yesParty:     allMailedResponses.filter((r) => r.staying_late === true).length,
+  };
+
+  const responseMap = new Map<string, any>(allResponses.map((r) => [r.guest_id, r]));
+  const guestMap    = new Map(guests.map((g) => [g.id, g]));
+
+  const guestsWithResponses: GuestWithResponse[] = processedGuestIds
+    .map((guestId) => {
+      const g        = guestMap.get(guestId);
+      const response = responseMap.get(guestId);
+      if (!g || !response) return null;
+      const guest: GuestInfo = {
+        first_name: g.first_name,
+        last_name:  g.last_name ?? null,
+        email:      g.email ?? null,
+      };
+      return { guest, response, previousStatus: previousStatusMap.get(guestId) ?? null };
+    })
+    .filter((x): x is GuestWithResponse => x !== null);
+
+  // One confirmation email per guest who has an email address on file
+  await Promise.allSettled(
+    guestsWithResponses.map(({ guest, response }) =>
+      sendGuestConfirmation(guest, response, party.invited_to_welcome_dinner ?? false)
+    )
+  );
+
+  // One admin notification for the whole party submission
+  await sendAdminNotification(
+    party.name,
+    guestsWithResponses,
+    party.invited_to_welcome_dinner ?? false,
+    stats
+  );
 }

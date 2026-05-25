@@ -307,6 +307,10 @@ Vercel                   ← hosting (connected to this GitHub repo)
 | `NEXT_PUBLIC_SUPABASE_URL` | `.env.local` + Vercel | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | `.env.local` + Vercel | Supabase service role key (never expose client-side) |
 | `SHIPPING_ADDRESS` | `.env.local` + Vercel | Julia & Jon's mailing address — not in source code |
+| `RESEND_API_KEY` | `.env.local` + Vercel | Resend API key — get from resend.com after domain verification |
+| `FROM_EMAIL` | `.env.local` + Vercel | Sending address: `Julia & Jon <wedding@juliajon.com>` — requires juliajon.com verified in Resend |
+| `ADMIN_EMAIL_JULIA` | `.env.local` + Vercel | Julia's email for RSVP admin notifications |
+| `ADMIN_EMAIL_JON` | `.env.local` + Vercel | Jon's email for RSVP admin notifications |
 
 ---
 
@@ -471,16 +475,46 @@ alter table guests alter column last_name drop not null;
 
 ---
 
+## Phase 4 — Email / SMS ← IN PROGRESS
+
+### Email (Resend) ← COMPLETE
+- ✓ `resend` npm package installed
+- ✓ `lib/resend.ts` — lazy Resend client singleton
+- ✓ `lib/emails.ts` — two email functions: `sendGuestConfirmation` and `sendAdminNotification`
+- ✓ `app/api/rsvp/submit/route.ts` — sends emails after every successful RSVP upsert
+- ✓ Guest confirmation email — sent to each guest with an email on file; subject searchable by "Julia & Jonathan's Wedding"; contains ceremony/reception details (with Google Maps links), welcome dinner status if invited, dietary notes, travel mode, link to juliajon.com. Status bar color: sage (yes), terracotta (no), gold (maybe).
+- ✓ Admin notification email — sent to Julia and Jon on every RSVP submission; subject is "New RSVP: [Party Name]" or "RSVP Changed: [Name] (yes -> maybe)"; shows all guest response fields; flags any status changes in terracotta; shows responded/pending guest count at bottom.
+- ✓ Email errors are caught and logged but never fail the RSVP submission.
+- ✓ Existing "no" lock still applies: guests whose previous status is "no" are skipped and receive no email.
+
+**Setup still needed (before emails will send):**
+1. Go to [resend.com](https://resend.com) and create a free account
+2. In Resend: Settings > Domains > Add Domain > enter `juliajon.com`
+3. Resend will give you DNS records to add. In Squarespace: Settings > Domains > juliajon.com > DNS Settings > add each record
+4. Once verified, go to Resend: API Keys > Create API Key > copy it
+5. Paste into `.env.local` as `RESEND_API_KEY=re_xxxx...`
+6. Add the same 4 new env vars to the Vercel dashboard (Settings > Environment Variables):
+   - `RESEND_API_KEY`
+   - `FROM_EMAIL` = `Julia & Jon <wedding@juliajon.com>`
+   - `ADMIN_EMAIL_JULIA` = `jmsakalus@gmail.com`
+   - `ADMIN_EMAIL_JON` = `sagejonathan.tesol@gmail.com`
+
+### SMS (Twilio) ← NOT STARTED
+- [ ] RSVP reminder texts
+- [ ] "Maybe" follow-up reminder closer to RSVP deadline
+
+---
+
 ## Nice-to-Have Features (Phase 4+)
 
 - [ ] Travel page rental car coordination — allow guests to enter their arrival date/time so they can find others to split a rental car with
-- [ ] Email guests via Resend or SendGrid
-- [ ] Text guests via Twilio (SMS)
-- [ ] RSVP reminder automation
+- [ ] RSVP reminder automation (email + SMS) — send reminders to guests who have not responded as the March 1, 2027 deadline approaches
 - [ ] RSVP dashboard: count of yes/no/pending
 - [ ] Admin page built into the website (`/admin`)
-- [ ] Email Julia every time someone RSVPs — include count of how many guests still haven't responded
 - [ ] If a guest RSVPs "maybe" for the wedding, automatically send them a reminder text closer to the deadline
+- [ ] AI-powered SMS reply bot — guest texts a question to the Twilio number; a Claude API call answers it using website content (FAQ, schedule, travel, where to stay) as the knowledge base; response is sent back via SMS
+  - If Claude cannot find a confident answer in the website content, it must NOT invent anything. Instead it should reply to the guest that we will follow up with them directly.
+  - When Claude cannot answer, send Julia and Jon an email notification with: the guest's name (from the Twilio "from" number matched against the guests table), the question they asked, and a prompt to update the FAQ so it can be answered automatically in the future.
 
 ---
 
