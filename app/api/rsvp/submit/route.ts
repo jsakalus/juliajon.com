@@ -127,14 +127,20 @@ async function sendRsvpEmails(
     allMailedResponses = mailedResponses ?? [];
   }
 
+  // When no invites have been mailed yet, fall back to this submission's data
+  // so the tally reflects what was just submitted rather than showing all zeros.
+  const tallySource = mailedGuestIds.length > 0
+    ? allMailedResponses
+    : allResponses.filter((r) => processedGuestIds.includes(r.guest_id));
+
   const stats: RsvpStats = {
     totalMailedCount:     mailedGuestIds.length,
-    respondedMailedCount: allMailedResponses.length,
-    yesWedding:   allMailedResponses.filter((r) => r.wedding_attending_status === "yes").length,
-    maybeWedding: allMailedResponses.filter((r) => r.wedding_attending_status === "maybe").length,
-    noWedding:    allMailedResponses.filter((r) => r.wedding_attending_status === "no").length,
-    yesDinner:    allMailedResponses.filter((r) => r.welcome_dinner_status === "yes").length,
-    yesParty:     allMailedResponses.filter((r) => r.staying_late === true).length,
+    respondedMailedCount: mailedGuestIds.length > 0 ? allMailedResponses.length : tallySource.length,
+    yesWedding:   tallySource.filter((r) => r.wedding_attending_status === "yes").length,
+    maybeWedding: tallySource.filter((r) => r.wedding_attending_status === "maybe").length,
+    noWedding:    tallySource.filter((r) => r.wedding_attending_status === "no").length,
+    yesDinner:    tallySource.filter((r) => r.welcome_dinner_status === "yes").length,
+    yesParty:     tallySource.filter((r) => r.staying_late === true).length,
   };
 
   const responseMap = new Map<string, any>(allResponses.map((r) => [r.guest_id, r]));
