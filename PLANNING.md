@@ -213,7 +213,8 @@ Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API
 - ✓ Description scroll animation fixed — only animates when text actually overflows container (JS overflow detection; short descriptions stay still). Applies to both fund and item descriptions.
 - ✓ Fund progress bar: removed confusing "/" prefix from goal total (was "/$3,000", now "$3,000")
 - ✓ Item cards: clicking any item card opens a larger modal (`max-w-md`) with full image, name, description, price, availability, "View on site →" and "Mark as purchased" buttons. No "tap to view" hint on card.
-- ✓ Item availability text: changed from "N/M purchased" / "N available" to "N more to go" (shows remaining count); applies to both grid cards and the view-item modal.
+- ✓ Item availability text: shows `qty/max purchased` counter (e.g. "4/5 purchased") on both grid tiles and view-item modal.
+- ✓ Item tiles: "View →" button restored on tiles for items with an external URL; click goes directly to site without opening the modal (stopPropagation). Tapping elsewhere on the card still opens the detail modal.
 - [ ] Content review with Julia & Jon to finalize items, descriptions, and external URLs
 - [ ] Minor UX tweaks
 

@@ -502,7 +502,7 @@ export default function Registry() {
             )}
             {hasLimit && (
               <p className="text-sm text-sage mt-1">
-                {isSoldOut ? "Already purchased" : `${item.max_quantity! - qty} more to go`}
+                {isSoldOut ? "Already purchased" : `${qty}/${item.max_quantity} purchased`}
               </p>
             )}
           </div>
@@ -682,10 +682,18 @@ export default function Registry() {
                           )}
                           {hasLimit && (
                             <p className="text-xs text-sage">
-                              {isSoldOut ? "Already purchased" : `${item.max_quantity! - qty} more to go`}
+                              {isSoldOut ? "Already purchased" : `${qty}/${item.max_quantity} purchased`}
                             </p>
                           )}
                         </div>
+                        {item.external_url && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleItemLinkClick(item); }}
+                            className="border border-beige-dark text-brown-light px-3 py-1.5 text-xs tracking-widest uppercase rounded-full w-full hover:border-sage hover:text-sage transition-colors"
+                          >
+                            View →
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
