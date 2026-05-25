@@ -503,7 +503,7 @@ export default function Registry() {
           {funds.length > 0 && (
             <section className="flex flex-col gap-4">
               <p className="text-xs tracking-[0.3em] uppercase text-brown-light font-sans">Funds</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {funds.map((fund) => {
                   const pct =
                     fund.price && fund.price > 0
