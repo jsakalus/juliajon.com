@@ -32,11 +32,21 @@ function Flower({
   );
 }
 
-export default function HomeGarden() {
-  const [responded, setResponded] = useState(0);
-  const [maybe, setMaybe] = useState(0);
-  const [yesNames, setYesNames] = useState<string[]>([]);
-  const [maybeNames, setMaybeNames] = useState<string[]>([]);
+export default function HomeGarden({
+  initialResponded = 0,
+  initialMaybe = 0,
+  initialYesNames = [],
+  initialMaybeNames = [],
+}: {
+  initialResponded?: number;
+  initialMaybe?: number;
+  initialYesNames?: string[];
+  initialMaybeNames?: string[];
+}) {
+  const [responded, setResponded] = useState(initialResponded);
+  const [maybe, setMaybe] = useState(initialMaybe);
+  const [yesNames, setYesNames] = useState<string[]>(initialYesNames);
+  const [maybeNames, setMaybeNames] = useState<string[]>(initialMaybeNames);
 
   useEffect(() => {
     fetch("/api/rsvp/count", { cache: "no-store" })

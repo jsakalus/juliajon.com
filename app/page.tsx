@@ -3,6 +3,7 @@ import Link from "next/link";
 import Countdown from "./components/Countdown";
 import PeanutRain from "./components/PeanutRain";
 import HomeGarden from "./components/HomeGarden";
+import { getSupabase } from "@/lib/supabase";
 
 const pages = [
   { href: "/schedule",      label: "Schedule",      sub: "Weekend Itinerary",              btn: "SEE SCHEDULE",   img: "/nav/schedule.png",      btnClass: "bg-sage" },
@@ -13,7 +14,39 @@ const pages = [
   { href: "/rsvp",          label: "RSVP",          sub: "Let us know if you're coming",   btn: "RSVP NOW",       img: "/nav/rsvp.png",           btnClass: "bg-mauve" },
 ];
 
-export default function Home() {
+async function getGardenData() {
+  try {
+    const { data: rows } = await getSupabase()
+      .from("rsvp_responses")
+      .select("guest_id, wedding_attending_status, guests(first_name, last_name)")
+      .in("wedding_attending_status", ["yes", "maybe"])
+      .order("submitted_at", { ascending: true });
+
+    const toInitials = (first: string, last: string | null) =>
+      [first, last].filter(Boolean).map((p) => p![0].toUpperCase() + ".").join("");
+
+    const yesRows = (rows ?? []).filter((r) => r.wedding_attending_status === "yes");
+    const maybeRows = (rows ?? []).filter((r) => r.wedding_attending_status === "maybe");
+
+    return {
+      responded: yesRows.length,
+      maybe: maybeRows.length,
+      yesNames: yesRows.map((r) => {
+        const g = r.guests as unknown as { first_name: string; last_name: string | null } | null;
+        return g ? toInitials(g.first_name, g.last_name) : "";
+      }).filter(Boolean) as string[],
+      maybeNames: maybeRows.map((r) => {
+        const g = r.guests as unknown as { first_name: string; last_name: string | null } | null;
+        return g ? toInitials(g.first_name, g.last_name) : "";
+      }).filter(Boolean) as string[],
+    };
+  } catch {
+    return { responded: 0, maybe: 0, yesNames: [], maybeNames: [] };
+  }
+}
+
+export default async function Home() {
+  const gardenData = await getGardenData();
   return (
     <div className="relative overflow-x-hidden">
       <PeanutRain />
@@ -43,7 +76,12 @@ export default function Home() {
 
       {/* Garden + RSVP CTA */}
       <div className="relative z-10 mb-12">
-        <HomeGarden />
+        <HomeGarden
+          initialResponded={gardenData.responded}
+          initialMaybe={gardenData.maybe}
+          initialYesNames={gardenData.yesNames}
+          initialMaybeNames={gardenData.maybeNames}
+        />
       </div>
 
       {/* Divider */}
