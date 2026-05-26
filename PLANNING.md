@@ -161,6 +161,7 @@ Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API
 - ✓ Car rental grouped under flying section, framed as a requirement (not optional)
 - ✓ Sage ✿ chip teasing arrival-time coordination feature for car sharing (Phase 4+ feature)
 - ✓ Shuttle option removed
+- ✓ Removed "canmore is worth the journey" subtitle and "Most guests…" intro paragraph from hero
 - [ ] Implement arrival time coordination feature (see Phase 4+ nice-to-haves)
 
 #### Where to Stay (`/where-to-stay`) ← MOSTLY COMPLETE
@@ -243,15 +244,6 @@ update registry_items set description = 'Jonathan resolved to learn how to ride 
 update registry_items set description = 'Julia loves everything from East Fork. She already owns three of The Mug and could always use more. Big bowls especially.' where name = 'East Fork Dinner Set';
 update registry_items set description = 'The peacock ones.' where name = 'Boleslawiec Dinnerware';
 ```
-
-**Items still needing external URLs** (add in Supabase table editor):
-- East Fork Dinner Set
-- Boleslawiec Dinnerware
-- Handmade Blown Glass Glasses
-- Honeymoon Fund (Venmo / e-transfer link)
-- House Fund (Venmo / e-transfer link)
-- Skydiving Fund (Venmo / e-transfer link + confirm goal amount)
-- Bike Fund (Venmo / e-transfer link)
 
 #### RSVP (`/rsvp`) ← MOSTLY COMPLETE
 - ✓ Name search → party lookup → per-guest form → submit
@@ -489,6 +481,10 @@ alter table guests alter column last_name drop not null;
 - `ADMIN_EMAIL_JULIA` = `jmsakalus@gmail.com`
 - `ADMIN_EMAIL_JON` = `sagejonathan.tesol@gmail.com`
 
+### Additional Email Templates ← NOT STARTED
+- [ ] "Maybe" nudge — sent to guests whose `wedding_attending_status = 'maybe'` as the RSVP deadline approaches; prompt them to confirm yes or no
+- [ ] Transportation nudge — sent to guests who have not confirmed travel (`travel_mode` is null or not set); prompt them to update their RSVP with flight/driving status
+
 ### SMS (Twilio) ← NOT STARTED
 - [ ] RSVP reminder texts
 - [ ] "Maybe" follow-up reminder closer to RSVP deadline
@@ -498,6 +494,7 @@ alter table guests alter column last_name drop not null;
 ## Nice-to-Have Features (Phase 4+)
 
 - [ ] Travel page rental car coordination — allow guests to enter their arrival date/time so they can find others to split a rental car with
+- [ ] Let guests plant their flower wherever they want on the screen (free placement) or in a dedicated garden patch on the page
 - [ ] RSVP reminder automation (email + SMS) — send reminders to guests who have not responded as the March 1, 2027 deadline approaches
 - [ ] RSVP dashboard: count of yes/no/pending
 - [ ] Admin page built into the website (`/admin`)

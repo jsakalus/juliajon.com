@@ -83,9 +83,6 @@ export default function WhereToStay() {
         >
           WHERE TO STAY
         </h1>
-        <p className="font-serif italic text-2xl text-brown-light mt-3">
-          book early. the mountains fill up fast.
-        </p>
         <p className="font-sans text-brown-light text-sm mt-4 leading-relaxed max-w-sm mx-auto">
           End of May is the start of peak season in Canmore. We recommend reserving your room as soon as you RSVP.
         </p>
@@ -97,7 +94,7 @@ export default function WhereToStay() {
         <p className="font-serif text-xl text-brown mb-3">
           Our cozy venue is reserved for the wedding party.
         </p>
-        <p className="font-sans text-brown-light text-sm leading-relaxed">
+        <p className="font-sans text-brown-light text-base sm:text-sm leading-relaxed">
           A Bear and Bison Inn is a 10-room inn tucked into the benchlands above Canmore. It&apos;s where our reception will be held, and those rooms are all reserved for our wedding party. All of the hotels below are within a short drive. The reception is up on the benchlands so a car or rideshare is recommended for that leg. The ceremony at Riverside Park is an easy walk from most downtown options.
         </p>
       </div>
@@ -128,7 +125,7 @@ export default function WhereToStay() {
                     <p className="font-sans text-brown-light text-sm mt-2 leading-relaxed">
                       {hotel.description}
                     </p>
-                    <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1 text-xs font-sans">
+                    <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:text-xs font-sans">
                       <div>
                         <p className="uppercase tracking-widest text-brown font-bold text-[0.65rem]">
                           Ceremony
@@ -151,7 +148,7 @@ export default function WhereToStay() {
             {tier.blockNote && (
               <div className="mt-3 bg-sage/10 rounded-xl px-5 py-3 flex items-start gap-2 border border-sage/20">
                 <span className="text-sage mt-0.5 shrink-0">✿</span>
-                <p className="font-sans text-sm text-sage-dark leading-relaxed">
+                <p className="font-sans text-base sm:text-sm text-sage-dark leading-relaxed">
                   {tier.blockNote}
                 </p>
               </div>
@@ -165,7 +162,7 @@ export default function WhereToStay() {
         <h2 className="font-handwritten text-2xl text-mauve mb-3">vacation rentals</h2>
         <div className="bg-white rounded-2xl shadow-sm p-8">
           <p className="font-serif text-xl text-brown mb-3">Want your own space or stay for longer?</p>
-          <p className="font-sans text-brown-light text-sm leading-relaxed">
+          <p className="font-sans text-brown-light text-base sm:text-sm leading-relaxed">
             Canmore has a great selection of vacation rentals on Airbnb and VRBO. A solid option if you&apos;re coming with family or a group of friends and want more space. We recommend staying in or near downtown Canmore for easy access to both venues and the restaurant scene.
           </p>
         </div>

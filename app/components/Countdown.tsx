@@ -18,6 +18,36 @@ export default function Countdown({ inline = false }: { inline?: boolean }) {
 
   if (days === null) return null;
 
+  if (days === 0) {
+    if (inline) {
+      return (
+        <p className="font-sans text-sm tracking-[0.25em] uppercase text-brown-light">
+          ARE GETTING MARRIED TODAY!
+        </p>
+      );
+    }
+    return (
+      <div className="flex flex-col items-center gap-1">
+        <p className="font-sans text-sm tracking-[0.25em] uppercase text-brown-light">ARE GETTING MARRIED TODAY!</p>
+      </div>
+    );
+  }
+
+  if (days < 0) {
+    if (inline) {
+      return (
+        <p className="font-sans text-sm tracking-[0.25em] uppercase text-brown-light">
+          GOT MARRIED!
+        </p>
+      );
+    }
+    return (
+      <div className="flex flex-col items-center gap-1">
+        <p className="font-sans text-sm tracking-[0.25em] uppercase text-brown-light">GOT MARRIED!</p>
+      </div>
+    );
+  }
+
   if (inline) {
     return (
       <p className="font-sans text-sm tracking-[0.25em] uppercase text-brown-light">

@@ -259,14 +259,14 @@ export default function Registry() {
           placeholder="First name"
           value={searchFirst}
           onChange={(e) => setSearchFirst(e.target.value)}
-          className="border border-beige-dark bg-white px-3 py-2.5 text-sm rounded-lg focus:outline-none focus:border-sage"
+          className="border border-beige-dark bg-white px-3 py-2.5 text-base md:text-sm rounded-lg focus:outline-none focus:border-sage"
         />
         <input
           type="text"
           placeholder="Last name"
           value={searchLast}
           onChange={(e) => setSearchLast(e.target.value)}
-          className="border border-beige-dark bg-white px-3 py-2.5 text-sm rounded-lg focus:outline-none focus:border-sage"
+          className="border border-beige-dark bg-white px-3 py-2.5 text-base md:text-sm rounded-lg focus:outline-none focus:border-sage"
         />
         {searchError && <p className="text-xs text-mauve">{searchError}</p>}
         <button
@@ -331,7 +331,7 @@ export default function Registry() {
                 placeholder="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="border border-beige-dark bg-white pl-7 pr-3 py-2.5 text-sm rounded-lg w-full focus:outline-none focus:border-sage"
+                className="border border-beige-dark bg-white pl-7 pr-3 py-2.5 text-base md:text-sm rounded-lg w-full focus:outline-none focus:border-sage"
               />
             </div>
             <button
@@ -407,14 +407,14 @@ export default function Registry() {
                     placeholder="First name"
                     value={searchFirst}
                     onChange={(e) => setSearchFirst(e.target.value)}
-                    className="border border-beige-dark bg-white px-3 py-2.5 text-sm rounded-lg focus:outline-none focus:border-sage"
+                    className="border border-beige-dark bg-white px-3 py-2.5 text-base md:text-sm rounded-lg focus:outline-none focus:border-sage"
                   />
                   <input
                     type="text"
                     placeholder="Last name"
                     value={searchLast}
                     onChange={(e) => setSearchLast(e.target.value)}
-                    className="border border-beige-dark bg-white px-3 py-2.5 text-sm rounded-lg focus:outline-none focus:border-sage"
+                    className="border border-beige-dark bg-white px-3 py-2.5 text-base md:text-sm rounded-lg focus:outline-none focus:border-sage"
                   />
                   {searchError && <p className="text-xs text-mauve">{searchError}</p>}
                 </>
@@ -428,7 +428,7 @@ export default function Registry() {
                   placeholder="0"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="border border-beige-dark bg-white pl-7 pr-3 py-2.5 text-sm rounded-lg w-full focus:outline-none focus:border-sage"
+                  className="border border-beige-dark bg-white pl-7 pr-3 py-2.5 text-base md:text-sm rounded-lg w-full focus:outline-none focus:border-sage"
                 />
               </div>
               <button
@@ -617,7 +617,7 @@ export default function Registry() {
                           )}
                         </div>
 
-                        {(fund.price || fund.total_contributed > 0) && (
+                        {(fund.price === null || (fund.price ?? 0) > 0 || fund.total_contributed > 0) && (
                           <div className="flex flex-col gap-1">
                             {pct !== null && (
                               <div className="h-1 bg-beige rounded-full overflow-hidden">
@@ -628,13 +628,19 @@ export default function Registry() {
                               </div>
                             )}
                             <div className="flex justify-between">
-                              <p className="text-xs text-brown-light">
-                                ${fund.total_contributed.toLocaleString()}
-                              </p>
-                              {fund.price && (
+                              {fund.price === null ? (
                                 <p className="text-xs text-brown-light">
-                                  ${fund.price.toLocaleString()}
+                                  ${fund.total_contributed.toLocaleString()} contributed so far
                                 </p>
+                              ) : (
+                                <>
+                                  <p className="text-xs text-brown-light">
+                                    ${fund.total_contributed.toLocaleString()}
+                                  </p>
+                                  <p className="text-xs text-brown-light">
+                                    ${fund.price.toLocaleString()}
+                                  </p>
+                                </>
                               )}
                             </div>
                             {fund.my_contribution > 0 && (

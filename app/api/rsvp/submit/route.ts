@@ -32,22 +32,22 @@ export async function POST(request: NextRequest) {
 
     const status = response.wedding_attending_status as "yes" | "no" | "maybe" | null;
 
+    // If changing away from "yes", always null out follow-up answers so
+    // the admin email tally is never inflated by stale responses.
+    const clearFollowUps = status === "maybe" || status === "no";
+
+    const dinnerStatus = clearFollowUps ? null : (response.welcome_dinner_status ?? null);
     const { error } = await getSupabase().from("rsvp_responses").upsert(
       {
         guest_id: response.guest_id,
         wedding_attending_status: status,
         wedding_attending: status === "yes" ? true : status === "no" ? false : null,
-        welcome_dinner_status: response.welcome_dinner_status ?? null,
-        welcome_dinner_attending:
-          response.welcome_dinner_status === "yes"
-            ? true
-            : response.welcome_dinner_status === "no"
-            ? false
-            : null,
+        welcome_dinner_status: dinnerStatus,
+        welcome_dinner_attending: dinnerStatus === "yes" ? true : dinnerStatus === "no" ? false : null,
         maybe_reason: response.maybe_reason ?? null,
-        dietary_notes: response.dietary_notes ?? "",
-        travel_mode: response.travel_mode ?? null,
-        staying_late: response.staying_late ?? null,
+        dietary_notes: status === "no" ? "" : (response.dietary_notes ?? ""),
+        travel_mode: clearFollowUps ? null : (response.travel_mode ?? null),
+        staying_late: clearFollowUps ? null : (response.staying_late ?? null),
         submitted_at: new Date().toISOString(),
       },
       { onConflict: "guest_id" }
@@ -156,6 +156,7 @@ async function sendRsvpEmails(
       const response = responseMap.get(guestId);
       if (!g || !response) return null;
       const guest: GuestInfo = {
+        id:         g.id,
         first_name: g.first_name,
         last_name:  g.last_name ?? null,
         email:      g.email ?? null,
