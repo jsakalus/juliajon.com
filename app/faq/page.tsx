@@ -183,7 +183,7 @@ function AccordionItem({
         style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
       >
         <div className="min-h-0">
-          <div className="pb-5 font-sans text-brown-light leading-relaxed text-sm pr-10">
+          <div className="pb-5 font-sans text-brown-light leading-relaxed text-base sm:text-sm pr-10">
             {a}
           </div>
         </div>
@@ -242,7 +242,7 @@ export default function FAQ() {
           <h2 className="font-handwritten text-2xl text-gold mb-1">where to stay</h2>
           <p className="font-serif text-xl text-brown">Hotel and accommodation recommendations near Canmore.</p>
         </div>
-        <p className="font-sans text-brown-light text-sm leading-relaxed">
+        <p className="font-sans text-brown-light text-base sm:text-sm leading-relaxed">
           We&apos;ve put together recommendations for places to stay near the venue.
         </p>
         <a
@@ -259,7 +259,7 @@ export default function FAQ() {
           <h2 className="font-handwritten text-2xl text-gold mb-1">getting here</h2>
           <p className="font-serif text-xl text-brown">Flights, driving, and getting around Canmore.</p>
         </div>
-        <p className="font-sans text-brown-light text-sm leading-relaxed">
+        <p className="font-sans text-brown-light text-base sm:text-sm leading-relaxed">
           Calgary International Airport (YYC) is about 1h15min from Canmore. Our travel page has everything you need to plan your trip.
         </p>
         <a

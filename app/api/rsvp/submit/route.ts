@@ -156,6 +156,7 @@ async function sendRsvpEmails(
       const response = responseMap.get(guestId);
       if (!g || !response) return null;
       const guest: GuestInfo = {
+        id:         g.id,
         first_name: g.first_name,
         last_name:  g.last_name ?? null,
         email:      g.email ?? null,

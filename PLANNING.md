@@ -161,6 +161,7 @@ Peanut assets live in `public/peanut/`. All sounds synthesized via Web Audio API
 - ✓ Car rental grouped under flying section, framed as a requirement (not optional)
 - ✓ Sage ✿ chip teasing arrival-time coordination feature for car sharing (Phase 4+ feature)
 - ✓ Shuttle option removed
+- ✓ Removed "canmore is worth the journey" subtitle and "Most guests…" intro paragraph from hero
 - [ ] Implement arrival time coordination feature (see Phase 4+ nice-to-haves)
 
 #### Where to Stay (`/where-to-stay`) ← MOSTLY COMPLETE
@@ -493,6 +494,7 @@ alter table guests alter column last_name drop not null;
 ## Nice-to-Have Features (Phase 4+)
 
 - [ ] Travel page rental car coordination — allow guests to enter their arrival date/time so they can find others to split a rental car with
+- [ ] Let guests plant their flower wherever they want on the screen (free placement) or in a dedicated garden patch on the page
 - [ ] RSVP reminder automation (email + SMS) — send reminders to guests who have not responded as the March 1, 2027 deadline approaches
 - [ ] RSVP dashboard: count of yes/no/pending
 - [ ] Admin page built into the website (`/admin`)

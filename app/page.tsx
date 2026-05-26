@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Countdown from "./components/Countdown";
 import PeanutRain from "./components/PeanutRain";
+import HomeGarden from "./components/HomeGarden";
 
 const pages = [
   { href: "/schedule",      label: "Schedule",      sub: "Weekend Itinerary",              btn: "SEE SCHEDULE",   img: "/nav/schedule.png",      btnClass: "bg-sage" },
@@ -31,6 +32,18 @@ export default function Home() {
           priority
         />
         <Countdown inline />
+      </div>
+
+      {/* Divider */}
+      <div className="flex items-center justify-center gap-4 mb-12 text-sage relative z-10">
+        <div className="h-px w-24 bg-sage-light"></div>
+        <span className="text-lg">✦</span>
+        <div className="h-px w-24 bg-sage-light"></div>
+      </div>
+
+      {/* Garden + RSVP CTA */}
+      <div className="relative z-10 mb-12">
+        <HomeGarden />
       </div>
 
       {/* Divider */}

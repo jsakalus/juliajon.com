@@ -8,6 +8,7 @@ const ADMIN_EMAILS = [process.env.ADMIN_EMAIL_JULIA, process.env.ADMIN_EMAIL_JON
 // ---- types ----
 
 export interface GuestInfo {
+  id: string;
   first_name: string;
   last_name: string | null;
   email: string | null;
@@ -341,6 +342,12 @@ export function guestConfirmationHtml(
 
                 <!-- Extra details (dietary, travel, maybe reason) -->
                 ${extraDetailsBlock}
+
+                <!-- Edit RSVP button (yes or maybe only) -->
+                ${(hasYes || hasMaybe) ? `
+                <tr><td style="padding-top:24px;text-align:center;">
+                  <a href="https://juliajon.com/rsvp?guestId=${encodeURIComponent(guestsWithResponses[0].guest.id)}" style="display:inline-block;background-color:#578C6C;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:12px 28px;border-radius:999px;">Edit my RSVP</a>
+                </td></tr>` : ""}
 
                 <!-- Spacer + divider + FAQ (not shown for no-RSVPs) -->
                 ${!isNo ? `

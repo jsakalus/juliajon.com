@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import PeanutCelebration from "../components/PeanutCelebration";
+import { BLOOMED_FLOWERS } from "../../lib/flowers";
 
 type AttendanceStatus = "yes" | "no" | "maybe" | null;
 
@@ -89,7 +91,6 @@ function BoolButton({ current, value, label, activeClass, onClick }: BoolButtonP
   );
 }
 
-const BLOOMED_FLOWERS = ["🌸", "🌼", "🌻", "🌷", "🌺"];
 
 function Flower({ emoji, name, style }: { emoji: string; name?: string; style?: React.CSSProperties }) {
   const [show, setShow] = useState(false);
@@ -179,6 +180,7 @@ function FlowerGarden({
 }
 
 export default function RSVP() {
+  const searchParams = useSearchParams();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -229,6 +231,36 @@ export default function RSVP() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const guestId = searchParams.get("guestId");
+    if (!guestId) return;
+    setLoading(true);
+    setError(null);
+    fetch(`/api/rsvp/search?guestId=${encodeURIComponent(guestId)}`)
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((data: SearchResult) => {
+        setResult(data);
+        const initial: Record<string, RsvpEntry> = {};
+        data.members.forEach((member) => {
+          const existing = data.existingResponses?.find((r) => r.guest_id === member.id);
+          initial[member.id] = {
+            guest_id: member.id,
+            wedding_attending_status: existing?.wedding_attending_status ?? null,
+            welcome_dinner_status: existing?.welcome_dinner_status ?? null,
+            maybe_reason: existing?.maybe_reason ?? "",
+            dietary_notes: existing?.dietary_notes ?? "",
+            travel_mode: existing?.travel_mode ?? null,
+            staying_late: existing?.staying_late ?? null,
+            email: member.email ?? "",
+            cell: member.phone ? formatPhone(member.phone) : "",
+          };
+        });
+        setResponses(initial);
+      })
+      .catch(() => setError("We couldn't load your RSVP. Please search by name below."))
+      .finally(() => setLoading(false));
+  }, [searchParams]);
 
   const playBoing = () => {
     try {
@@ -884,7 +916,7 @@ export default function RSVP() {
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="border border-beige-dark bg-beige px-3 py-3 text-sm w-full rounded-xl focus:outline-none focus:border-sage pr-9"
+                    className="border border-beige-dark bg-beige px-3 py-3 text-base md:text-sm w-full rounded-xl focus:outline-none focus:border-sage pr-9"
                     placeholder="First name"
                     required
                   />
@@ -900,7 +932,7 @@ export default function RSVP() {
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="border border-beige-dark bg-beige px-3 py-3 text-sm w-full rounded-xl focus:outline-none focus:border-sage pr-9"
+                    className="border border-beige-dark bg-beige px-3 py-3 text-base md:text-sm w-full rounded-xl focus:outline-none focus:border-sage pr-9"
                     placeholder="Last name"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sage-light text-base pointer-events-none select-none">
@@ -1023,7 +1055,7 @@ export default function RSVP() {
                             <textarea
                               value={r.maybe_reason}
                               onChange={(e) => updateResponse(member.id, "maybe_reason", e.target.value)}
-                              className="border border-beige-dark bg-white px-3 py-2.5 text-sm w-full rounded-lg focus:outline-none focus:border-sage resize-none"
+                              className="border border-beige-dark bg-white px-3 py-2.5 text-base md:text-sm w-full rounded-lg focus:outline-none focus:border-sage resize-none"
                               rows={2}
                               placeholder="e.g. waiting on a work trip, figuring out travel…"
                             />
@@ -1140,7 +1172,7 @@ export default function RSVP() {
                           <textarea
                             value={r?.dietary_notes ?? ""}
                             onChange={(e) => updateResponse(member.id, "dietary_notes", e.target.value)}
-                            className="border border-beige-dark bg-white px-3 py-2.5 text-sm w-full rounded-lg focus:outline-none focus:border-sage resize-none"
+                            className="border border-beige-dark bg-white px-3 py-2.5 text-base md:text-sm w-full rounded-lg focus:outline-none focus:border-sage resize-none"
                             rows={2}
                             placeholder="Allergies, dietary restrictions, etc. Leave blank if none."
                           />
@@ -1164,7 +1196,7 @@ export default function RSVP() {
                                 type="email"
                                 value={r?.email ?? ""}
                                 onChange={(e) => updateResponse(member.id, "email", e.target.value)}
-                                className={`border bg-white px-3 py-2.5 text-sm w-full rounded-lg focus:outline-none focus:border-sage ${fieldErrors[member.id] ? "border-terracotta" : "border-beige-dark"}`}
+                                className={`border bg-white px-3 py-2.5 text-base md:text-sm w-full rounded-lg focus:outline-none focus:border-sage ${fieldErrors[member.id] ? "border-terracotta" : "border-beige-dark"}`}
                                 placeholder="your@email.com"
                               />
                               {fieldErrors[member.id] && (
@@ -1179,7 +1211,7 @@ export default function RSVP() {
                                   type="tel"
                                   value={r?.cell ?? ""}
                                   onChange={(e) => updateResponse(member.id, "cell", formatPhone(e.target.value))}
-                                  className="px-3 py-2.5 text-sm w-full focus:outline-none bg-white"
+                                  className="px-3 py-2.5 text-base md:text-sm w-full focus:outline-none bg-white"
                                   placeholder="(555) 000-0000"
                                 />
                               </div>
