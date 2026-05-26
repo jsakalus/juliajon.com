@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import PeanutCelebration from "../components/PeanutCelebration";
@@ -180,6 +180,14 @@ function FlowerGarden({
 }
 
 export default function RSVP() {
+  return (
+    <Suspense>
+      <RSVPInner />
+    </Suspense>
+  );
+}
+
+function RSVPInner() {
   const searchParams = useSearchParams();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
