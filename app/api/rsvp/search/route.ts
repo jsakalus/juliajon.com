@@ -88,12 +88,13 @@ export async function POST(request: NextRequest) {
         return true;
       });
 
-      // Pass 3: prefix match for hyphenated names (e.g. "Marie" → "Marie-Claire")
-      // Only used when Pass 2 found nothing and no last name was supplied
-      if (matches.length === 0 && !normLast) {
+      // Pass 3: prefix match for hyphenated first names (e.g. "Anne" → "Anne-Fréderic")
+      if (matches.length === 0) {
         matches = allGuests.filter((g) => {
           const firstSegment = normalizeName((g.first_name ?? "").split("-")[0]);
-          return firstSegment === normFirst;
+          if (firstSegment !== normFirst) return false;
+          if (normLast) return normalizeName(g.last_name ?? "") === normLast;
+          return true;
         });
       }
 
