@@ -10,6 +10,13 @@ function normalizeName(s: string): string {
     .trim();
 }
 
+// True if input exactly matches stored, or matches its first space-separated segment.
+// Handles partial input for compound/hyphenated names: "anne" → "anne frederic", "seve" → "seve milian".
+function segmentMatch(input: string, stored: string): boolean {
+  if (input === stored) return true;
+  return stored.split(" ")[0] === input;
+}
+
 export async function GET(request: NextRequest) {
   const guestId = request.nextUrl.searchParams.get("guestId");
   if (!guestId) return NextResponse.json({ error: "guestId required" }, { status: 400 });
@@ -79,24 +86,14 @@ export async function POST(request: NextRequest) {
       const normFirst = normalizeName(firstRaw);
       const normLast = normalizeName(lastRaw);
 
-      // Pass 2: normalize both sides — strips accents, collapses hyphens/spaces
-      let matches = allGuests.filter((g) => {
+      // Normalized + segment match: handles accents, hyphens, and partial compound names
+      const matches = allGuests.filter((g) => {
         const gFirst = normalizeName(g.first_name ?? "");
         const gLast = normalizeName(g.last_name ?? "");
-        if (gFirst !== normFirst) return false;
-        if (normLast) return gLast === normLast;
+        if (!segmentMatch(normFirst, gFirst)) return false;
+        if (normLast) return segmentMatch(normLast, gLast);
         return true;
       });
-
-      // Pass 3: prefix match for hyphenated first names (e.g. "Anne" → "Anne-Fréderic")
-      if (matches.length === 0) {
-        matches = allGuests.filter((g) => {
-          const firstSegment = normalizeName((g.first_name ?? "").split("-")[0]);
-          if (firstSegment !== normFirst) return false;
-          if (normLast) return normalizeName(g.last_name ?? "") === normLast;
-          return true;
-        });
-      }
 
       guests = matches.length > 0 ? matches : null;
       error = null;
