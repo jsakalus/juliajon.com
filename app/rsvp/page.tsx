@@ -217,10 +217,18 @@ function RSVPInner() {
   const snoreTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confettiCanvasRef = useRef<HTMLCanvasElement>(null);
   const confettiAnimRef = useRef<number | null>(null);
+  const resultRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     return () => { if (confettiAnimRef.current) cancelAnimationFrame(confettiAnimRef.current); };
   }, []);
+
+  useEffect(() => {
+    if (result && resultRef.current) {
+      const top = window.scrollY + resultRef.current.getBoundingClientRect().top - window.innerHeight * 0.35;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  }, [result]);
 
   useEffect(() => {
     ["/peanut/Maybe.png", "/peanut/Party.png", "/peanut/Yes dinner.png",
@@ -970,7 +978,7 @@ function RSVPInner() {
 
           {/* ── RSVP form ── */}
           {result && (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6 mb-8">
+            <form ref={resultRef} onSubmit={handleSubmit} className="flex flex-col gap-6 mb-8">
               <p className="font-serif italic text-3xl text-sage-dark">
                 Found your invitation! 🎉
               </p>

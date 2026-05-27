@@ -10,11 +10,11 @@ function normalizeName(s: string): string {
     .trim();
 }
 
-// True if input exactly matches stored, or matches its first space-separated segment.
-// Handles partial input for compound/hyphenated names: "anne" → "anne frederic", "seve" → "seve milian".
+// True if input exactly matches stored, or matches any space-separated segment.
+// Handles partial input for compound/hyphenated names: "anne" → "anne frederic", "milian" → "seve milian".
 function segmentMatch(input: string, stored: string): boolean {
   if (input === stored) return true;
-  return stored.split(" ")[0] === input;
+  return stored.split(" ").includes(input);
 }
 
 export async function GET(request: NextRequest) {
