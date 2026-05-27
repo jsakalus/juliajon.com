@@ -511,9 +511,9 @@ export default function Registry() {
             {item.description && (
               <p className="text-sm text-brown-light leading-relaxed mt-1">{item.description}</p>
             )}
-            {hasLimit && (
+            {(hasLimit || qty > 0) && (
               <p className="text-sm text-sage mt-1">
-                {isSoldOut ? "Already purchased" : `${qty}/${item.max_quantity} purchased`}
+                {isSoldOut ? "Already purchased" : hasLimit ? `${qty}/${item.max_quantity} purchased` : `${qty} purchased`}
               </p>
             )}
           </div>
@@ -707,9 +707,9 @@ export default function Registry() {
                           {item.price && (
                             <p className="text-xs text-brown-light">${item.price.toLocaleString()}</p>
                           )}
-                          {hasLimit && (
+                          {(hasLimit || qty > 0) && (
                             <p className="text-xs text-sage">
-                              {isSoldOut ? "Already purchased" : `${qty}/${item.max_quantity} purchased`}
+                              {isSoldOut ? "Already purchased" : hasLimit ? `${qty}/${item.max_quantity} purchased` : `${qty} purchased`}
                             </p>
                           )}
                         </div>
