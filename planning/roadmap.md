@@ -14,6 +14,7 @@
 ## Active TODOs
 
 - [ ] **404 page** at `app/not-found.tsx` — should include the nav, and a photo of Peanut in the middle (the same one used for Maybe = `Maybe.png`)
+- [ ] **Save the Date / address collection page** (e.g. `/save-the-date` or `/address`) — guest-facing form so we don't have to chase addresses. Same name-search pattern as `/rsvp` (first + last → party lookup via `POST /api/rsvp/search`). On match, show the structured address fields we already use in admin (line 1/2/3, city, state/province, postal, country) pre-filled if any are set; submit writes back to the party's address columns. Country selector with the 5 supported countries; postal auto-format matches the admin modal. Polite confirmation after save. Public page (no admin auth), but should rate-limit or otherwise not enumerate the guest list. Consider auto-checking `address_collected` or similar if we add such a flag.
 - [ ] Provide last names for guests who only have a first name (needed for RSVP name search)
 - [ ] Confirm welcome dinner list and update `invited_to_welcome_dinner` as needed
 - [ ] Write FAQ answers (dress code, kids, gifts, etc.)

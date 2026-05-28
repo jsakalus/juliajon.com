@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { useTierFilter } from '@/lib/adminTier';
+import TierBar from '../components/TierBar';
 import AddressModal, { AddressFields } from './AddressModal';
 
 export type Guest = {
@@ -194,13 +196,10 @@ function PartyCard({
   );
 }
 
-const TIER_FILTERS = ['All', 'A', 'B', 'C'] as const;
-type TierFilter = (typeof TIER_FILTERS)[number];
-
 export default function GuestsClient({ initialParties }: { initialParties: Party[] }) {
   const [parties, setParties] = useState<Party[]>(initialParties);
   const [search, setSearch] = useState('');
-  const [tierFilter, setTierFilter] = useState<TierFilter>('All');
+  const [tierFilter] = useTierFilter();
   const [hideNos, setHideNos] = useState(false);
   const [editingAddressFor, setEditingAddressFor] = useState<string | null>(null);
 
@@ -322,32 +321,17 @@ export default function GuestsClient({ initialParties }: { initialParties: Party
   return (
     <div>
       <div className="mb-4">
-        <h1 className="font-serif text-2xl sm:text-3xl text-brown">Guests</h1>
+        <h1 className="font-serif text-2xl sm:text-3xl text-brown">
+          Guests
+          {tierFilter !== 'All' && <span className="text-base sm:text-lg text-brown-light"> · Tier {tierFilter}</span>}
+        </h1>
         <p className="text-sm text-brown-light mt-1">
-          {tierFilter !== 'All' && <span className="font-medium text-brown">Tier {tierFilter}: </span>}
           {stats.totalParties} parties · {stats.totalGuests} guests · {stats.mailed} invites mailed
         </p>
+        <TierBar className="mt-3" />
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {TIER_FILTERS.map(t => {
-            const active = tierFilter === t;
-            return (
-              <button
-                key={t}
-                onClick={() => setTierFilter(t)}
-                className={`text-sm px-3 py-1 rounded-full transition-colors ${
-                  active
-                    ? 'bg-brown text-beige'
-                    : 'bg-white border border-beige-dark text-brown hover:border-brown'
-                }`}
-              >
-                {t}
-              </button>
-            );
-          })}
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-3 mb-3">
         <label className="flex items-center gap-1.5 text-sm cursor-pointer select-none">
           <input
             type="checkbox"

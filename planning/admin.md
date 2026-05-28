@@ -9,7 +9,7 @@ Phase 5 of the project. Built at `/admin/*` (protected by a session cookie). Let
 | 1. Foundation + auth | ✅ Complete |
 | 2. Admin layout + dashboard | ✅ Complete |
 | 3. Guest management | ✅ Complete |
-| 4. RSVP management | ⬜ Not started |
+| 4. RSVP management | ✅ Complete |
 | 5. Registry management | ⬜ Not started |
 | 6. RSVP tier gate (public site) | ⬜ Not started |
 
@@ -62,7 +62,7 @@ Phase 5 of the project. Built at `/admin/*` (protected by a session cookie). Let
 | `/admin/login` | ✅ | Email + password form, redirects to `/admin` on success |
 | `/admin` | ✅ | Dashboard overview, metrics + RSVP/dinner tallies + quick links |
 | `/admin/guests` | ✅ | Party + guest management, address modal, CSV export |
-| `/admin/rsvps` | ⬜ | Stub. RSVP table with filters; optional manual override |
+| `/admin/rsvps` | ✅ | All-guest RSVP list with tier/wedding/dinner filters, search, and per-guest edit modal (manual override) |
 | `/admin/registry` | ⬜ | Stub. Add/edit/hide registry items; URL auto-fill on add |
 
 ## API Routes
@@ -75,8 +75,8 @@ Phase 5 of the project. Built at `/admin/*` (protected by a session cookie). Let
 | `/api/admin/guests/[partyId]` | ✅ | PATCH | Edit party name, address, dinner invite, mailed status, tier |
 | `/api/admin/guests/export` | ✅ | GET | CSV download for invite software |
 | `/api/admin/guest/[guestId]` | ✅ | PATCH | Rename a guest (also email/phone) |
-| `/api/admin/rsvps` | ⬜ | GET | All RSVP data with filters |
-| `/api/admin/rsvps/[guestId]` | ⬜ | PATCH | Manual override of a guest's RSVP |
+| `/api/admin/rsvps/[guestId]` | ✅ | PATCH | Manual override of a guest's RSVP (upserts row, mirrors the public submit logic) |
+| `/api/admin/rsvps/[guestId]` | ✅ | DELETE | Reset a guest to "pending" by removing their `rsvp_responses` row |
 | `/api/admin/registry` | ⬜ | GET/POST | List or add registry items |
 | `/api/admin/registry/[id]` | ⬜ | PATCH/DELETE | Edit or delete an item |
 | `/api/admin/registry/fetch-url` | ⬜ | POST | Scrape product details from URL (Open Graph / JSON-LD) |
