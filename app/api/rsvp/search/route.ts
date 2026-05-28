@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 
+function normalizeName(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/\p{Mn}/gu, "")   // strip diacritics
+    .replace(/[-\s]+/g, " ")   // collapse hyphens and spaces
+    .toLowerCase()
+    .trim();
+}
+
+// True if input exactly matches stored, or matches any space-separated segment.
+// Handles partial input for compound/hyphenated names: "anne" → "anne frederic", "milian" → "seve milian".
+function segmentMatch(input: string, stored: string): boolean {
+  if (input === stored) return true;
+  return stored.split(" ").includes(input);
+}
+
 export async function GET(request: NextRequest) {
   const guestId = request.nextUrl.searchParams.get("guestId");
   if (!guestId) return NextResponse.json({ error: "guestId required" }, { status: 400 });
@@ -47,22 +63,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "First name is required" }, { status: 400 });
   }
 
+  const firstRaw = firstName.trim();
+  const lastRaw = lastName?.trim() ?? "";
+
+  // Pass 1: exact case-insensitive match (existing behavior)
   let query = getSupabase()
     .from("guests")
     .select("id, first_name, last_name, party_id")
-    .ilike("first_name", firstName.trim());
+    .ilike("first_name", firstRaw);
 
-  if (lastName?.trim()) {
-    query = query.ilike("last_name", lastName.trim());
+  if (lastRaw) query = query.ilike("last_name", lastRaw);
+
+  let { data: guests, error } = await query;
+
+  // Pass 2 & 3: normalized fallback when exact match fails
+  if (error || !guests || guests.length === 0) {
+    const { data: allGuests } = await getSupabase()
+      .from("guests")
+      .select("id, first_name, last_name, party_id");
+
+    if (allGuests && allGuests.length > 0) {
+      const normFirst = normalizeName(firstRaw);
+      const normLast = normalizeName(lastRaw);
+
+      // Normalized + segment match: handles accents, hyphens, and partial compound names
+      const matches = allGuests.filter((g) => {
+        const gFirst = normalizeName(g.first_name ?? "");
+        const gLast = normalizeName(g.last_name ?? "");
+        if (!segmentMatch(normFirst, gFirst)) return false;
+        if (normLast) return segmentMatch(normLast, gLast);
+        return true;
+      });
+
+      guests = matches.length > 0 ? matches : null;
+      error = null;
+    }
   }
-
-  const { data: guests, error } = await query;
 
   if (error || !guests || guests.length === 0) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
-  if (guests.length > 1 && !lastName?.trim()) {
+  if (guests.length > 1 && !lastRaw) {
     return NextResponse.json({ error: "needs_last_name" }, { status: 409 });
   }
 
