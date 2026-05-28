@@ -10,7 +10,7 @@ Phase 5 of the project. Built at `/admin/*` (protected by a session cookie). Let
 | 2. Admin layout + dashboard | ✅ Complete |
 | 3. Guest management | ✅ Complete |
 | 4. RSVP management | ✅ Complete |
-| 5. Registry management | ⬜ Not started |
+| 5. Registry management | ✅ Complete |
 | 6. RSVP tier gate (public site) | ⬜ Not started |
 
 ## Architecture
@@ -63,7 +63,7 @@ Phase 5 of the project. Built at `/admin/*` (protected by a session cookie). Let
 | `/admin` | ✅ | Dashboard overview, metrics + RSVP/dinner tallies + quick links |
 | `/admin/guests` | ✅ | Party + guest management, address modal, CSV export |
 | `/admin/rsvps` | ✅ | All-guest RSVP list with tier/wedding/dinner filters, search, and per-guest edit modal (manual override) |
-| `/admin/registry` | ⬜ | Stub. Add/edit/hide registry items; URL auto-fill on add |
+| `/admin/registry` | ✅ | Item/fund list with image thumbnails, type + active toggles, edit modal, delete (blocked if contributions exist), URL auto-fill on add |
 
 ## API Routes
 
@@ -77,9 +77,9 @@ Phase 5 of the project. Built at `/admin/*` (protected by a session cookie). Let
 | `/api/admin/guest/[guestId]` | ✅ | PATCH | Rename a guest (also email/phone) |
 | `/api/admin/rsvps/[guestId]` | ✅ | PATCH | Manual override of a guest's RSVP (upserts row, mirrors the public submit logic) |
 | `/api/admin/rsvps/[guestId]` | ✅ | DELETE | Reset a guest to "pending" by removing their `rsvp_responses` row |
-| `/api/admin/registry` | ⬜ | GET/POST | List or add registry items |
-| `/api/admin/registry/[id]` | ⬜ | PATCH/DELETE | Edit or delete an item |
-| `/api/admin/registry/fetch-url` | ⬜ | POST | Scrape product details from URL (Open Graph / JSON-LD) |
+| `/api/admin/registry` | ✅ | GET/POST | List items (with purchased/contributed counts) or add a new one |
+| `/api/admin/registry/[id]` | ✅ | PATCH/DELETE | Edit fields; DELETE returns 400 if any `registry_contributions` reference the item |
+| `/api/admin/registry/fetch-url` | ✅ | POST | Scrape product details (JSON-LD `Product`, Open Graph, twitter, `<title>`) with 8s timeout + 2MB cap |
 | `/api/admin/settings` | ⬜ | PATCH | Update `site_settings` (e.g. RSVP tier gate) |
 
 ## Dashboard (`/admin`)
