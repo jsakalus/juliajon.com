@@ -71,8 +71,9 @@ export async function POST(request: NextRequest) {
   }
 
   // Send emails after all upserts succeed. Errors are logged but never fail the RSVP.
+  // Must be awaited before returning — Vercel kills the serverless function on response.
   if (processedGuestIds.length > 0) {
-    sendRsvpEmails(responses, processedGuestIds, previousStatusMap).catch((err) =>
+    await sendRsvpEmails(responses, processedGuestIds, previousStatusMap).catch((err) =>
       console.error("Email send failed:", err)
     );
   }

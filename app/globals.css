@@ -107,6 +107,11 @@ body {
   100% { transform: translateX(-110%); }
 }
 
+@keyframes stdate-slide-up {
+  from { transform: translateX(-50%) translateY(110%); }
+  to   { transform: translateX(-50%) translateY(0); }
+}
+
 @keyframes faq-slide-in {
   0%   { transform: translateX(200px); opacity: 0; }
   70%  { transform: translateX(-8px);  opacity: 1; }
