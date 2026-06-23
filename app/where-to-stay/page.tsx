@@ -10,7 +10,6 @@ type Hotel = {
 type Tier = {
   label: string;
   accent: string;
-  blockNote?: string;
   hotels: Hotel[];
 };
 
@@ -32,8 +31,6 @@ const tiers: Tier[] = [
   {
     label: "our picks",
     accent: "text-sage",
-    blockNote:
-      "We're working on securing a room block at one or both of these. We'll update this page when details are confirmed.",
     hotels: [
       {
         name: "Mountain View Inn",
@@ -145,14 +142,6 @@ export default function WhereToStay() {
                 ))}
               </div>
             </div>
-            {tier.blockNote && (
-              <div className="mt-3 bg-sage/10 rounded-xl px-5 py-3 flex items-start gap-2 border border-sage/20">
-                <span className="text-sage mt-0.5 shrink-0">✿</span>
-                <p className="font-sans text-base sm:text-sm text-sage-dark leading-relaxed">
-                  {tier.blockNote}
-                </p>
-              </div>
-            )}
           </div>
         ))}
       </div>
