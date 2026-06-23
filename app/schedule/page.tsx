@@ -10,13 +10,13 @@ const DAYS = [
       {
         accentBg: "bg-lavender",
         timeColor: "text-lavender",
-        image: "/illustrations/welcome-dinner.png",
-        alt: "Welcome Dinner",
+        image: "/illustrations/welcome-dinner-firepit.png",
+        alt: "Welcome Dinner at A Bear and Bison Inn",
         title: "Welcome Dinner",
-        time: "Evening",
-        location: "Location TBD",
-        locationHref: null,
-        note: "Kick off the weekend with us. More details to come.",
+        time: "6:00 PM",
+        location: "A Bear and Bison Inn · Canmore, AB",
+        locationHref: "https://maps.google.com/?q=Bear+and+Bison+Inn+Canmore+Alberta",
+        note: "Local brats and beer (vegetarian options available). Hot tub available too — bring a swimsuit and towel!",
       },
     ],
   },
@@ -142,16 +142,16 @@ export default function Schedule() {
         <p className="font-handwritten text-sage text-3xl mb-4">Stick around?</p>
         <div className="flex flex-col gap-4 font-sans text-brown leading-relaxed">
           <p>
-            We&apos;re staying in Calgary for the week after the wedding. We know a lot of you are travelling from far
-            away, and if you&apos;re thinking of making a trip out of it, you really should.
+            We know most of you are travelling from far away, and if you&apos;re thinking of making a trip out of it,
+            you really should.
           </p>
           <p>
             If you&apos;ve never seen the Canadian Rockies, they are genuinely some of the most beautiful scenery on
             earth. Banff, Jasper, Lake Louise, Moraine Lake. Just go.
           </p>
           <p>
-            If you&apos;re planning to stick around, please let us know! We would love nothing more than some extra
-            time with our favourite people.
+            We&apos;ll be in Calgary for the week after the wedding. If you&apos;re planning to stick around, please let
+            us know! We would love nothing more than some extra time with our favorite people.
           </p>
         </div>
       </div>
