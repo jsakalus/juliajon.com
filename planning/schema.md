@@ -109,6 +109,27 @@ One row per guest, created when they submit their RSVP. Unique on `guest_id` (en
 | dietary_notes | text | free text: allergies, vegan, GF, etc. |
 | submitted_at | timestamp | when they submitted |
 
+### `travel_plans` table
+
+One row per guest who opts in to rental-car coordination on `/travel`. Created
+by `scripts/travel-plans.sql`. See [pages/travel-coordination.md](pages/travel-coordination.md).
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | primary key |
+| guest_id | uuid | FK → guests.id, unique (one plan per guest; enables upsert), cascade delete |
+| arrival_airport | text | default 'YYC' |
+| arrival_date | date | required |
+| arrival_time | text | optional free text, e.g. "2:40 PM" |
+| departure_airport | text | default 'YYC' |
+| departure_date | date | optional |
+| departure_time | text | optional |
+| share_intent | text | 'needs_seat' / 'has_car' / 'flexible' (check constraint) |
+| share_scope | text | 'whole_trip' / 'airport_only' / 'either' (check constraint) |
+| note | text | optional |
+| is_visible | boolean | default true; false hides from the board without deleting |
+| created_at / updated_at | timestamptz | auto-set |
+
 ### `admins` table
 
 One row per admin user authorized to access the admin dashboard.

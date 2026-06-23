@@ -606,6 +606,103 @@ export async function sendGuestConfirmation(
   );
 }
 
+// ---- rental-buddy connect email ----
+
+export interface RentalConnectInfo {
+  toEmail: string;
+  toFirstName: string;
+  fromFirstName: string;
+  fromEmail: string;
+  fromNote: string | null;
+  travelSummary: string; // e.g. "Arriving May 28 (2:40 PM) into YYC · Sharing the whole trip"
+}
+
+export function rentalConnectHtml(info: RentalConnectInfo): string {
+  const noteBlock = info.fromNote
+    ? `<tr>
+        <td style="padding:14px 0 0;">
+          <p style="margin:0 0 3px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">Their note</p>
+          <p style="margin:0;font-size:15px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${esc(info.fromNote)}</p>
+        </td>
+      </tr>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>A wedding guest wants to share a rental car</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F8F4EC;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#F8F4EC;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="max-width:520px;">
+
+          <tr>
+            <td style="background-color:#578C6C;border-radius:8px 8px 0 0;padding:24px;text-align:center;">
+              <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.65);font-family:Arial,Helvetica,sans-serif;">Julia &amp; Jonathan</p>
+              <p style="margin:8px 0 0;font-size:22px;color:#ffffff;font-family:Georgia,'Times New Roman',serif;">A rental-car buddy!</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#578C6C;padding:0;line-height:0;font-size:0;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 30" width="520" height="30" style="display:block;width:100%;" preserveAspectRatio="none">
+                <path d="M0,22 C80,10 160,28 240,16 C310,6 390,24 460,14 L520,10 L520,30 L0,30 Z" fill="#ffffff"/>
+              </svg>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color:#ffffff;padding:28px 24px;border-radius:0 0 8px 8px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">
+                <tr>
+                  <td>
+                    <p style="margin:0;font-size:16px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">Hi ${esc(info.toFirstName)},</p>
+                    <p style="margin:10px 0 0;font-size:15px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;"><strong>${esc(info.fromFirstName)}</strong> saw your travel plans on the wedding site and would like to coordinate sharing a rental car.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:18px 0 0;">
+                    <p style="margin:0 0 3px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">Their plans</p>
+                    <p style="margin:0;font-size:15px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">${esc(info.travelSummary)}</p>
+                  </td>
+                </tr>
+                ${noteBlock}
+                <tr>
+                  <td style="padding:22px 0 0;">
+                    <p style="margin:0;font-size:15px;color:#2C2018;font-family:Arial,Helvetica,sans-serif;">Just reply to this email to reach ${esc(info.fromFirstName)} at <a href="mailto:${esc(info.fromEmail)}" style="color:#578C6C;text-decoration:none;">${esc(info.fromEmail)}</a>.</p>
+                  </td>
+                </tr>
+                <tr><td style="padding-top:22px;border-top:1px solid #EBE2CE;margin-top:22px;"></td></tr>
+                <tr>
+                  <td style="padding-top:16px;">
+                    <p style="margin:0;font-size:13px;color:#6B5848;font-family:Arial,Helvetica,sans-serif;">You got this because you shared your travel plans at <a href="https://juliajon.com/travel" style="color:#578C6C;text-decoration:none;">juliajon.com/travel</a>. Not interested? You can ignore this email or remove your plans on that page.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendRentalConnect(info: RentalConnectInfo): Promise<void> {
+  await getResend().emails.send({
+    from: FROM,
+    to: info.toEmail,
+    replyTo: info.fromEmail,
+    subject: `${info.fromFirstName} wants to share a rental car to Canmore`,
+    html: rentalConnectHtml(info),
+  });
+}
+
 export async function sendAdminNotification(
   partyName: string,
   guestsWithResponses: GuestWithResponse[],
