@@ -40,7 +40,7 @@ export default function FlowerBorders() {
           width={220}
           height={900}
           className="h-full w-auto object-cover object-bottom"
-          style={{ filter: "drop-shadow(4px 3px 3px rgba(0,0,0,0.18))" }}
+          style={{ filter: "drop-shadow(4px 3px 3px rgba(0,0,0,0.18))"  }}
         />
       </div>
       <div
