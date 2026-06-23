@@ -11,8 +11,8 @@ type PlanForm = {
   departure_airport: string;
   departure_date: string;
   departure_time: string;
-  share_intent: "needs_seat" | "has_car" | "flexible";
-  share_scope: "whole_trip" | "airport_only" | "either";
+  share_intent: "" | "needs_seat" | "has_car" | "flexible";
+  share_scope: "" | "whole_trip" | "airport_only" | "either";
   note: string;
   email: string;
 };
@@ -51,8 +51,8 @@ const EMPTY_FORM: PlanForm = {
   departure_airport: "YYC",
   departure_date: "",
   departure_time: "",
-  share_intent: "flexible",
-  share_scope: "either",
+  share_intent: "",
+  share_scope: "",
   note: "",
   email: "",
 };
@@ -136,8 +136,8 @@ export default function RentalBuddy() {
         departure_airport: data.plan.departure_airport ?? "YYC",
         departure_date: data.plan.departure_date ?? "",
         departure_time: data.plan.departure_time ?? "",
-        share_intent: data.plan.share_intent ?? "flexible",
-        share_scope: data.plan.share_scope ?? "either",
+        share_intent: data.plan.share_intent ?? "",
+        share_scope: data.plan.share_scope ?? "",
         note: data.plan.note ?? "",
         email: data.guest.email ?? "",
       });
@@ -293,7 +293,8 @@ export default function RentalBuddy() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
             <span className={labelClass}>I&apos;m looking to</span>
-            <select value={form.share_intent} onChange={(e) => set("share_intent", e.target.value as PlanForm["share_intent"])} className={inputClass}>
+            <select required value={form.share_intent} onChange={(e) => set("share_intent", e.target.value as PlanForm["share_intent"])} className={inputClass}>
+              <option value="" disabled>Select…</option>
               <option value="needs_seat">Find a seat in someone&apos;s car</option>
               <option value="has_car">Offer seats (I&apos;ll have a car)</option>
               <option value="flexible">Flexible, let&apos;s figure it out</option>
@@ -301,7 +302,8 @@ export default function RentalBuddy() {
           </label>
           <label className="block">
             <span className={labelClass}>Share for</span>
-            <select value={form.share_scope} onChange={(e) => set("share_scope", e.target.value as PlanForm["share_scope"])} className={inputClass}>
+            <select required value={form.share_scope} onChange={(e) => set("share_scope", e.target.value as PlanForm["share_scope"])} className={inputClass}>
+              <option value="" disabled>Select…</option>
               <option value="whole_trip">The whole trip</option>
               <option value="airport_only">Just the airport ride</option>
               <option value="either">Either works</option>
