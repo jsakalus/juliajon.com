@@ -34,9 +34,10 @@ Phase 5 of the project. Built at `/admin/*` (protected by a session cookie). Let
 - Disabled. All admin operations run server-side using `SUPABASE_SERVICE_ROLE_KEY` (same as the public API routes), which bypasses RLS. Security is enforced by the middleware session check.
 
 ### Layout
-- `app/admin/layout.tsx` wraps all admin pages. If pathname is `/admin/login` it renders children only (no chrome); otherwise it shows the admin nav header.
+- `app/admin/layout.tsx` wraps all admin pages. It just renders `AdminShell` (a client component) — no logic of its own.
+- `app/admin/components/AdminShell.tsx` — client component that reads `usePathname()` to choose the chrome: on `/admin/login` it renders children only (no chrome); otherwise it wraps children in the admin nav + padded container. **Must be a client component:** a server layout reading the pathname via `headers()` is cached and does not re-render on navigation, so after client-side sign-in (`/admin/login` → `/admin`) the chrome went stale — no nav, no padding — until a manual refresh. Next.js docs call this out explicitly under layout caveats ("Pathname").
 - Root layout (`app/layout.tsx`) hides `NavBar`, `FlowerBorders`, and the public footer when pathname starts with `/admin` (reads `x-pathname` header set by middleware).
-- `app/admin/components/AdminNav.tsx` — sticky top nav with brand, links, and sign-out button.
+- `app/admin/components/AdminNav.tsx` — sticky top nav (client component). Brand + sign-out stay on one row; the nav pills sit inline between them on desktop (`hidden sm:flex`) and drop to their own wrapping row on mobile (`sm:hidden flex flex-wrap`), so nothing is clipped on narrow screens. Active pill is filled brown; inactive pills are bordered and hover-highlight.
 
 ## Files in this phase
 
@@ -44,7 +45,8 @@ Phase 5 of the project. Built at `/admin/*` (protected by a session cookie). Let
 |---|---|
 | `middleware.ts` | Auth check + `x-pathname` header |
 | `lib/session.ts` | JWT sign/verify, `getAdminSession()`, cookie name constant |
-| `app/admin/layout.tsx` | Admin layout wrapper (hides chrome on login) |
+| `app/admin/layout.tsx` | Admin layout wrapper (renders `AdminShell`) |
+| `app/admin/components/AdminShell.tsx` | Client chrome wrapper; shows nav + padding unless on `/admin/login` |
 | `app/admin/login/page.tsx` | Email + password sign-in form |
 | `app/admin/page.tsx` | Dashboard overview |
 | `app/admin/components/AdminNav.tsx` | Admin nav header (client component) |
@@ -63,7 +65,7 @@ Phase 5 of the project. Built at `/admin/*` (protected by a session cookie). Let
 | `/admin` | ✅ | Dashboard overview, metrics + RSVP/dinner tallies + quick links |
 | `/admin/guests` | ✅ | Party + guest management, address modal, CSV export |
 | `/admin/rsvps` | ✅ | All-guest RSVP list with tier/wedding/dinner filters, search, and per-guest edit modal (manual override) |
-| `/admin/registry` | ✅ | Item/fund list with image thumbnails, type + active toggles, edit modal, delete (blocked if contributions exist), URL auto-fill on add |
+| `/admin/registry` | ✅ | Item/fund list with image thumbnails, type + active toggles, edit modal, delete (blocked if contributions exist), URL auto-fill on add. Cards stack on mobile (`flex-col sm:flex-row`): thumbnail + details on top, action buttons in a bottom row; long item names wrap (`break-words`) instead of truncating. |
 
 ## API Routes
 

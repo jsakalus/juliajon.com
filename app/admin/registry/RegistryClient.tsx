@@ -44,11 +44,12 @@ function ItemCard({
 
   return (
     <div
-      className={`bg-white border border-beige-dark rounded-xl shadow-sm p-3 sm:p-4 flex gap-3 ${
+      className={`bg-white border border-beige-dark rounded-xl shadow-sm p-3 sm:p-4 flex flex-col sm:flex-row gap-3 ${
         item.is_active ? '' : 'opacity-50'
       }`}
     >
-      <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-beige overflow-hidden flex items-center justify-center">
+      <div className="flex gap-3 flex-1 min-w-0">
+        <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-beige overflow-hidden flex items-center justify-center">
         {item.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={item.image_url} alt="" className="w-full h-full object-contain" />
@@ -63,7 +64,7 @@ function ItemCard({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex items-baseline gap-2 flex-wrap">
-              <h3 className="font-serif text-base text-brown truncate">{item.name}</h3>
+              <h3 className="font-serif text-base text-brown break-words">{item.name}</h3>
               <span
                 className={`text-xs px-1.5 py-0.5 rounded ${
                   isFund ? 'bg-gold/20 text-brown' : 'bg-sage/20 text-brown'
@@ -101,7 +102,9 @@ function ItemCard({
         </div>
       </div>
 
-      <div className="flex flex-col items-end gap-2 shrink-0">
+      </div>
+
+      <div className="flex flex-row sm:flex-col items-center sm:items-end justify-end gap-2 shrink-0">
         <label className="flex items-center gap-1 cursor-pointer text-xs">
           <input
             type="checkbox"
