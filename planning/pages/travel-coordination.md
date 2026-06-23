@@ -1,6 +1,22 @@
 # Travel Page: Rental Car Coordination ("Find a rental buddy")
 
-**Status**: 🔵 Planned (design agreed, not built)
+**Status**: 🟡 Built; needs the DB table created before it works live
+
+> **One manual step to go live:** run `scripts/travel-plans.sql` in the Supabase
+> SQL editor (Database → SQL Editor → New query → paste → Run) to create the
+> `travel_plans` table. Until then the form shows a friendly error on submit.
+
+## Files
+
+| File | Role |
+|---|---|
+| `scripts/travel-plans.sql` | Creates the `travel_plans` table (run once in Supabase) |
+| `app/travel/RentalBuddy.tsx` | Client component: name search → plan form → board with Connect |
+| `app/api/travel/search/route.ts` | Name search → returns guest + any existing plan |
+| `app/api/travel/plans/route.ts` | GET board (first names only), POST upsert, DELETE remove |
+| `app/api/travel/connect/route.ts` | Double opt-in: emails the target guest via Resend |
+| `lib/emails.ts` | `sendRentalConnect` / `rentalConnectHtml` |
+| `app/travel/page.tsx` | Renders `<RentalBuddy />` in the flying-in section |
 
 Lets flying guests coordinate sharing a rental car. Lives on the `/travel`
 page, delivering the promise already made by the sage ✿ teaser chip and the
@@ -58,22 +74,29 @@ closeness. No AI, no algorithm — same shape as the RSVP name-search lookup.
   note + travel window. Target replies directly.
 - Before sending, requester sees a consent line: "We'll share your name and
   email with {name} so they can reply."
-- **Dependency:** `guests.email` is optional today. If the requester has no
-  email on file, prompt for one at connect time (and save it).
+- **Resolved:** `guests.email` is optional in general, but the plan form makes
+  email **required** and saves it back to the guest's row on submit. So everyone
+  on the board has a reachable reply-to address, and connect always works.
 
 ## Build order
 
-1. `travel_plans` table + migration SQL.
-2. Form UI on `/travel`, gated behind identity (reuse name-search component).
-3. Board listing + matching query (read API).
-4. Connect email route via Resend.
-5. "Edit / remove my plan" view.
-6. Later: admin dashboard view of who's coordinating; filters by airport/date.
+1. ✅ `travel_plans` table SQL (`scripts/travel-plans.sql`).
+2. ✅ Form UI on `/travel`, behind name-search identity.
+3. ✅ Board listing (first names only, sorted by arrival date).
+4. ✅ Connect email route via Resend (double opt-in, reply-to = requester).
+5. ✅ Edit + remove-my-plan.
+6. ⬜ Later: admin dashboard view of who's coordinating; filters by airport/date;
+   highlight "near your dates" matches; auto-notify on new overlapping plans.
 
 ## Notes & open items
 
 - Only useful once RSVPs are flowing; board is empty until guests submit flights.
-- Gate to identified guests; guests who RSVP'd `driving` won't fill it but the
-  board need not hard-block them.
-- Per the no-real-data-writes rule, build/test with throwaway rows only.
-- Confirm match window (±1 day default) with Julia & Jon.
+- Board shows everyone sorted by arrival date (no ±1-day filter applied yet — the
+  guest list is small enough to eyeball). A proximity highlight is a later polish.
+- Connect requires the requester to have their own plan (so only participants can
+  initiate, and we have their reply-to email).
+- **Known limitation (acceptable for this audience):** like the rest of the site,
+  identity is "knows a guest's name" — there's no login. The board exposes each
+  plan's `guest_id`, so a determined guest could trigger a connect email naming
+  someone else. Fine for a private wedding; revisit only if abused.
+- Per the no-real-data-writes rule, test with throwaway guest rows only.

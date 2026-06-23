@@ -1,3 +1,5 @@
+import RentalBuddy from "./RentalBuddy";
+
 export default function Travel() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-16 flex flex-col gap-16">
@@ -85,12 +87,7 @@ export default function Travel() {
           </div>
         </div>
 
-        <div className="bg-sage/10 rounded-xl px-5 py-3 flex items-start gap-2 border border-sage/20">
-          <span className="text-sage mt-0.5 shrink-0">✿</span>
-          <p className="font-sans text-base sm:text-sm text-sage-dark leading-relaxed">
-            Planning to rent? We&apos;re working on a way for guests to share their arrival time so you can split a rental with someone else flying in around the same time. Stay tuned!
-          </p>
-        </div>
+        <RentalBuddy />
       </div>
 
       {/* Driving section */}
